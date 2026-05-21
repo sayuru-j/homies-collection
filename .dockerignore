@@ -1,0 +1,13 @@
+.git
+.gitignore
+.venv
+venv
+certs
+data
+.env
+__pycache__
+*.py[cod]
+*.md
+docker-compose.livekit.yml
+livekit.yaml
+agent-transcripts

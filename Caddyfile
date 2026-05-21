@@ -1,0 +1,3 @@
+app.green-valley.homes {
+	reverse_proxy homielog:8000
+}

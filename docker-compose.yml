@@ -1,0 +1,30 @@
+# Production: HomieLog + Caddy (HTTPS + WebSockets).
+# On VM: copy this folder (or at least Caddyfile, docker-compose.yml, image) to /opt/appsvc
+#   mkdir -p /opt/appsvc/data && chown -R 1000:1000 /opt/appsvc
+#   docker compose up -d --build
+
+services:
+  homielog:
+    build: .
+    restart: unless-stopped
+    volumes:
+      - /opt/appsvc/data:/app/data
+    expose:
+      - "8000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - homielog
+
+volumes:
+  caddy_data:
+  caddy_config:
