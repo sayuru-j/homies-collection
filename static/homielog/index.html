@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#5865f2">
+  <meta name="color-scheme" content="dark">
+  <title>HomieLog</title>
+  <link rel="stylesheet" href="/static/homielog/css/discord.css">
+</head>
+<body class="auth-page">
+  <div class="auth-wrap">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">HL</div>
+      <h1>HomieLog</h1>
+      <p>For friends who shouldn’t be left unattended</p>
+    </div>
+
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" data-tab="login">Log in</button>
+        <button type="button" class="auth-tab" data-tab="register">Register</button>
+      </div>
+
+      <div id="login-panel" class="auth-panel active">
+        <form id="login-form">
+          <label>Display name
+            <input type="text" id="login-name" required maxlength="50" autocomplete="username" placeholder="The name you picked (hopefully)">
+          </label>
+          <label>PIN
+            <input type="password" id="login-pin" required pattern="\d{6}" maxlength="6" inputmode="numeric" autocomplete="current-password" placeholder="6-digit PIN">
+          </label>
+          <button type="submit" class="btn-primary">Log In</button>
+        </form>
+      </div>
+
+      <div id="register-panel" class="auth-panel">
+        <form id="register-form">
+          <label>Display name
+            <input type="text" id="register-name" required maxlength="50" autocomplete="username" placeholder="Put whatever the fuck you want">
+          </label>
+          <label>PIN
+            <input type="password" id="register-pin" required pattern="\d{6}" maxlength="6" inputmode="numeric" autocomplete="new-password" placeholder="6-digit PIN">
+          </label>
+          <label>Invite code
+            <input type="text" id="register-invite" required pattern="\d{4}" minlength="4" maxlength="4" inputmode="numeric" autocomplete="off" placeholder="Code your friend actually sent you">
+          </label>
+          <button type="submit" class="btn-primary">Continue</button>
+        </form>
+      </div>
+    </div>
+
+    <p id="error"></p>
+    <p class="auth-public-link">
+      <a href="/stranger-danger">StrangerDanger</a> — live video with strangers (account required)
+    </p>
+  </div>
+
+  <script src="/static/shared/js/api.js"></script>
+  <script src="/static/homielog/js/auth.js"></script>
+</body>
+</html>

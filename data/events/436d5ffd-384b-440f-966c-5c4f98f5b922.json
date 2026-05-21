@@ -1,0 +1,25 @@
+{
+  "event_id": "436d5ffd-384b-440f-966c-5c4f98f5b922",
+  "group_id": "2bedb4dd-bbdc-47c3-8dca-f78a598fba42",
+  "title": "Karima Bula",
+  "description": "",
+  "location": "",
+  "starts_at": "2026-05-21T03:23:00.000Z",
+  "ends_at": null,
+  "created_by": "7a8ee710-136f-40d0-a1ab-5b5dfc3a2385",
+  "created_at": "2026-05-21T03:23:58.668845+00:00",
+  "rsvps": {
+    "7a8ee710-136f-40d0-a1ab-5b5dfc3a2385": "going"
+  },
+  "posts": [
+    {
+      "id": "9e9ea3b9-9977-4c08-a04f-390c7d5d50a9",
+      "sender_id": "7a8ee710-136f-40d0-a1ab-5b5dfc3a2385",
+      "content": "Pudiya.png",
+      "message_type": "image",
+      "media_path": "data/media/7a8ee710-136f-40d0-a1ab-5b5dfc3a2385/image/d1de2c9b-b1c3-498c-91de-45c3999a0182.jpg",
+      "thumb_path": "data/media/7a8ee710-136f-40d0-a1ab-5b5dfc3a2385/image/thumbs/d1de2c9b-b1c3-498c-91de-45c3999a0182.jpg",
+      "created_at": "2026-05-21T03:24:14.393098+00:00"
+    }
+  ]
+}

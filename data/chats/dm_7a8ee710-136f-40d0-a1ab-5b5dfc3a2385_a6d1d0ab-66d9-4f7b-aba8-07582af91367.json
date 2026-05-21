@@ -1,0 +1,83 @@
+{
+  "chat_id": "dm_7a8ee710-136f-40d0-a1ab-5b5dfc3a2385_a6d1d0ab-66d9-4f7b-aba8-07582af91367",
+  "type": "dm",
+  "members": [
+    "7a8ee710-136f-40d0-a1ab-5b5dfc3a2385",
+    "a6d1d0ab-66d9-4f7b-aba8-07582af91367"
+  ],
+  "messages": [
+    {
+      "id": "c7183269-7bbe-4b9b-b850-e89123791bfb",
+      "sender_id": "a6d1d0ab-66d9-4f7b-aba8-07582af91367",
+      "content": "wait",
+      "message_type": "text",
+      "media_path": null,
+      "created_at": "2026-05-21T01:24:22.944497+00:00"
+    },
+    {
+      "id": "248f700a-85fb-4a72-b804-7eb9202a1dc9",
+      "sender_id": "7a8ee710-136f-40d0-a1ab-5b5dfc3a2385",
+      "content": "Okie",
+      "message_type": "text",
+      "media_path": null,
+      "created_at": "2026-05-21T01:24:27.020671+00:00"
+    },
+    {
+      "id": "941381fe-584c-4f1d-9b55-be55c1cd7000",
+      "sender_id": "a6d1d0ab-66d9-4f7b-aba8-07582af91367",
+      "content": "Cl",
+      "message_type": "text",
+      "media_path": null,
+      "created_at": "2026-05-21T01:24:40.745308+00:00"
+    },
+    {
+      "id": "24475d45-5c1e-453d-ad6c-7cce66e8c667",
+      "sender_id": "7a8ee710-136f-40d0-a1ab-5b5dfc3a2385",
+      "content": "Call recording",
+      "message_type": "video",
+      "media_path": "data/media/7a8ee710-136f-40d0-a1ab-5b5dfc3a2385/video/08da77d3-3c21-4565-88d1-0ee5e84d5f58.webm",
+      "created_at": "2026-05-21T01:25:14.960584+00:00"
+    },
+    {
+      "id": "4eb59748-8023-4065-90e8-dd4bc5c2cc53",
+      "sender_id": "7a8ee710-136f-40d0-a1ab-5b5dfc3a2385",
+      "content": "Call recording",
+      "message_type": "video",
+      "media_path": "data/media/7a8ee710-136f-40d0-a1ab-5b5dfc3a2385/video/056a8deb-36b4-4a68-b920-ed9885af0de1.webm",
+      "created_at": "2026-05-21T01:25:55.953450+00:00"
+    },
+    {
+      "id": "3b37821f-b43c-47da-b689-8dbcc49ecc8d",
+      "sender_id": "7a8ee710-136f-40d0-a1ab-5b5dfc3a2385",
+      "content": "Ohhh",
+      "message_type": "text",
+      "media_path": null,
+      "created_at": "2026-05-21T01:26:04.569472+00:00"
+    },
+    {
+      "id": "c0824ead-3135-499c-9fb6-52848702bcb2",
+      "sender_id": "a6d1d0ab-66d9-4f7b-aba8-07582af91367",
+      "content": "202651791843.png",
+      "message_type": "image",
+      "media_path": "data/media/a6d1d0ab-66d9-4f7b-aba8-07582af91367/image/8518295b-bae1-437d-b5d7-7eaaf6e37e1a.jpg",
+      "created_at": "2026-05-21T01:26:07.403583+00:00"
+    },
+    {
+      "id": "c86df9a7-1383-44e6-bb17-fbbe34323c57",
+      "sender_id": null,
+      "content": "2:29 video call —",
+      "message_type": "system",
+      "media_path": null,
+      "created_at": "2026-05-21T01:28:49.296456+00:00",
+      "call_id": "9310cebd-5651-4f98-9cab-11a50b7fa3cc"
+    },
+    {
+      "id": "92ce0290-1bca-4303-bee5-8fa1859c7ccb",
+      "sender_id": "7a8ee710-136f-40d0-a1ab-5b5dfc3a2385",
+      "content": "Call recording",
+      "message_type": "video",
+      "media_path": "data/media/7a8ee710-136f-40d0-a1ab-5b5dfc3a2385/video/94f18d8c-d2bb-4180-80f9-1bcc9754f6ea.webm",
+      "created_at": "2026-05-21T01:29:22.396490+00:00"
+    }
+  ]
+}

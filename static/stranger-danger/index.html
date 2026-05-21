@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#fff500">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="StrangerDanger — match with a random stranger on live video. Camera and mic optional.">
+  <title>StrangerDanger</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=IBM+Plex+Mono:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/stranger-danger/css/site.css">
+</head>
+<body class="sd-site">
+  <div class="sd-app">
+    <header class="sd-topbar">
+      <div class="sd-brand">
+        <span class="sd-brand-mark" aria-hidden="true">!</span>
+        <span class="sd-brand-name">StrangerDanger</span>
+      </div>
+      <span id="sd-online-pill" class="sd-tag sd-tag--live" hidden>LIVE</span>
+    </header>
+
+    <div class="sd-viewport">
+      <video id="sd-remote-video" class="sd-remote-video" autoplay playsinline webkit-playsinline></video>
+
+      <div id="sd-local-pip" class="sd-local-pip sd-local-pip--square hidden" role="button" tabindex="0" aria-label="Your camera preview. Tap to toggle square or circle shape.">
+        <video id="sd-local-video" class="sd-local-video" autoplay playsinline webkit-playsinline muted></video>
+      </div>
+
+      <div id="sd-overlay-start" class="sd-overlay">
+        <div class="sd-card">
+          <p class="sd-tagline">LIVE</p>
+          <h1 class="sd-title">
+            <span class="sd-title-word">Stranger</span>
+            <span class="sd-title-word">Danger</span>
+          </h1>
+          <p class="sd-lead">You. Them. No script.</p>
+          <ul class="sd-rules">
+            <li>Random strangers, live video</li>
+            <li>Camera &amp; mic optional — watch or talk</li>
+            <li>Sign in to join the queue</li>
+          </ul>
+          <button type="button" class="sd-btn sd-btn--primary" id="sd-start-btn">ENTER</button>
+          <button type="button" class="sd-btn sd-btn--secondary hidden" id="sd-signin-btn">SIGN IN</button>
+          <p id="sd-guest-hint" class="sd-hint hidden">Account required to match.</p>
+          <p id="sd-start-error" class="sd-error hidden" role="alert"></p>
+        </div>
+      </div>
+
+      <div id="sd-overlay-search" class="sd-overlay hidden">
+        <div class="sd-loader" aria-hidden="true"></div>
+        <p class="sd-search-title">FINDING STRANGER</p>
+        <p id="sd-status" class="sd-status" aria-live="polite">Connecting to queue</p>
+        <button type="button" class="sd-btn sd-btn--ghost" id="sd-cancel-search-btn">CANCEL</button>
+      </div>
+
+      <div id="sd-overlay-connected" class="sd-overlay-bar hidden">
+        <p id="sd-peer-label" class="sd-stranger-label">STRANGER</p>
+      </div>
+    </div>
+
+    <footer id="sd-controls" class="sd-controls hidden">
+      <button type="button" class="sd-btn sd-btn--next" id="sd-next-btn">NEXT</button>
+      <button type="button" class="sd-btn sd-btn--mute" id="sd-mute-btn" aria-pressed="false">MIC ON</button>
+      <button type="button" class="sd-btn sd-btn--stop" id="sd-leave-btn">BAIL</button>
+    </footer>
+  </div>
+
+  <script src="/static/shared/js/api.js"></script>
+  <script src="/static/stranger-danger/js/app.js"></script>
+</body>
+</html>

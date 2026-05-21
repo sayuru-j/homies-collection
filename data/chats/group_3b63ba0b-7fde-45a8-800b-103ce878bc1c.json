@@ -1,0 +1,51 @@
+{
+  "chat_id": "group_3b63ba0b-7fde-45a8-800b-103ce878bc1c",
+  "type": "group",
+  "name": "Couples Only",
+  "members": [
+    "a6d1d0ab-66d9-4f7b-aba8-07582af91367",
+    "7a8ee710-136f-40d0-a1ab-5b5dfc3a2385"
+  ],
+  "messages": [
+    {
+      "id": "3e2156a1-e73a-4142-827b-a0155404e26c",
+      "sender_id": "a6d1d0ab-66d9-4f7b-aba8-07582af91367",
+      "content": "Group \"Couples Only\" created",
+      "message_type": "system",
+      "media_path": null,
+      "created_at": "2026-05-21T01:19:37.755381+00:00"
+    },
+    {
+      "id": "aa4eef95-7c49-48b5-9f83-d12667789356",
+      "sender_id": "a6d1d0ab-66d9-4f7b-aba8-07582af91367",
+      "content": "Your phone linging",
+      "message_type": "text",
+      "media_path": null,
+      "created_at": "2026-05-21T01:19:52.802917+00:00"
+    },
+    {
+      "id": "d683c1ad-3f3f-40c4-8be8-f6f34b16c9bf",
+      "sender_id": "7a8ee710-136f-40d0-a1ab-5b5dfc3a2385",
+      "content": "1000072089.jpg",
+      "message_type": "image",
+      "media_path": "data/media/7a8ee710-136f-40d0-a1ab-5b5dfc3a2385/image/4f012df9-4f34-464b-86eb-fb985c040a56.jpg",
+      "created_at": "2026-05-21T01:20:19.640007+00:00"
+    },
+    {
+      "id": "83fe9871-f2f9-4bda-812b-1fec31525498",
+      "sender_id": null,
+      "content": "Event: Hora kota — May 21, 2026 03:00 UTC",
+      "message_type": "system",
+      "media_path": null,
+      "created_at": "2026-05-21T01:42:09.451288+00:00"
+    },
+    {
+      "id": "922c705f-84ba-4ed6-bc16-ae80c079b447",
+      "sender_id": null,
+      "content": "Event: Chuka Poon — May 21, 2026 03:11 UTC",
+      "message_type": "system",
+      "media_path": null,
+      "created_at": "2026-05-21T03:11:39.869668+00:00"
+    }
+  ]
+}

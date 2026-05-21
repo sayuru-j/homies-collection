@@ -1,0 +1,307 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.4;
+  color: #111;
+  background: #f4f4f5;
+}
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+input,
+button,
+select,
+textarea {
+  font: inherit;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+button {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.5rem 1rem;
+  border: 1px solid #888;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+button:active {
+  background: #eee;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Auth page */
+.auth-page {
+  min-height: 100dvh;
+  padding: 1rem;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.auth-page h1 {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.auth-card label {
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.auth-card button {
+  width: 100%;
+}
+
+#error {
+  color: #b00020;
+  max-width: 400px;
+  width: 100%;
+  word-break: break-word;
+}
+
+/* Chat app */
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+  flex-shrink: 0;
+}
+
+.top-bar #me-name {
+  flex: 1;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#back-btn {
+  display: none;
+  flex-shrink: 0;
+}
+
+.app-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.panel {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar {
+  width: 320px;
+  max-width: 40%;
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid #ddd;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.75rem;
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.sidebar h2,
+.sidebar h3 {
+  margin: 0.75rem 0 0.35rem;
+  font-size: 0.95rem;
+}
+
+.sidebar li {
+  padding: 0.65rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  word-break: break-word;
+}
+
+.sidebar li:active {
+  background: #eee;
+}
+
+.chat-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #fafafa;
+  min-width: 0;
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+  flex-shrink: 0;
+}
+
+.chat-header h2 {
+  margin: 0;
+  font-size: 1rem;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.75rem;
+}
+
+#messages > div {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.65rem;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e5e5e5;
+  word-break: break-word;
+}
+
+#composer {
+  flex-shrink: 0;
+  padding: 0.75rem;
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  background: #fff;
+  border-top: 1px solid #ddd;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+#composer #message-input {
+  flex: 1 1 100%;
+}
+
+#composer #send-btn {
+  flex: 1;
+}
+
+#composer input[type="file"] {
+  flex: 1 1 calc(50% - 0.25rem);
+  min-height: auto;
+  padding: 0.35rem;
+  font-size: 0.85rem;
+}
+
+#voice-btn {
+  flex: 1 1 100%;
+}
+
+#upload-status {
+  flex: 1 1 100%;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+#my-avatar {
+  display: block;
+  margin-top: 0.5rem;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Mobile: one panel at a time */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    max-width: none;
+    flex: 1;
+    border-right: none;
+  }
+
+  .chat-panel {
+    display: none;
+    flex: 1;
+  }
+
+  .app.chat-open .sidebar {
+    display: none;
+  }
+
+  .app.chat-open .chat-panel {
+    display: flex;
+  }
+
+  .app.chat-open #back-btn {
+    display: inline-block;
+  }
+
+  .auth-page {
+    padding: 0.75rem;
+  }
+}
+
+/* Desktop: always show both panels */
+@media (min-width: 769px) {
+  .chat-panel {
+    display: flex !important;
+  }
+
+  .sidebar {
+    display: flex !important;
+  }
+}

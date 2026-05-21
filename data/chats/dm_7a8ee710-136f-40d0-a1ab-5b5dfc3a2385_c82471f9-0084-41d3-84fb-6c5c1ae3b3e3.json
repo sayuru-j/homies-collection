@@ -1,0 +1,64 @@
+{
+  "chat_id": "dm_7a8ee710-136f-40d0-a1ab-5b5dfc3a2385_c82471f9-0084-41d3-84fb-6c5c1ae3b3e3",
+  "type": "dm",
+  "members": [
+    "7a8ee710-136f-40d0-a1ab-5b5dfc3a2385",
+    "c82471f9-0084-41d3-84fb-6c5c1ae3b3e3"
+  ],
+  "messages": [
+    {
+      "id": "a8a09b41-0d86-47a1-a00e-8a76c909bad1",
+      "sender_id": "c82471f9-0084-41d3-84fb-6c5c1ae3b3e3",
+      "content": "hukknna kmtid mta",
+      "message_type": "text",
+      "media_path": null,
+      "thumb_path": null,
+      "created_at": "2026-05-21T03:51:37.407505+00:00"
+    },
+    {
+      "id": "e74b7a0c-63bc-4cac-a47a-95d7069e9bce",
+      "sender_id": null,
+      "content": "2:55 voice call —",
+      "message_type": "system",
+      "media_path": null,
+      "created_at": "2026-05-21T03:55:09.409093+00:00",
+      "call_id": "57711068-bb9a-44c8-96d2-63479c95cb60"
+    },
+    {
+      "id": "d86babec-c6d7-431f-9df4-ba635b5de0de",
+      "sender_id": null,
+      "content": "40 seconds video call —",
+      "message_type": "system",
+      "media_path": null,
+      "created_at": "2026-05-21T03:55:56.904343+00:00",
+      "call_id": "cbcc5954-9e75-4458-905a-730bda074ef1"
+    },
+    {
+      "id": "0740cef4-3426-4efc-9618-f224cf0daaf5",
+      "sender_id": "7a8ee710-136f-40d0-a1ab-5b5dfc3a2385",
+      "content": "Call recording",
+      "message_type": "video",
+      "media_path": "data/media/7a8ee710-136f-40d0-a1ab-5b5dfc3a2385/video/1f05334a-dd3d-4ebc-a115-d7677c43ab05.webm",
+      "thumb_path": "data/media/7a8ee710-136f-40d0-a1ab-5b5dfc3a2385/video/thumbs/1f05334a-dd3d-4ebc-a115-d7677c43ab05.jpg",
+      "created_at": "2026-05-21T03:56:02.083847+00:00"
+    },
+    {
+      "id": "6ab96d04-6cc3-42ee-9404-2101f0a17a17",
+      "sender_id": "c82471f9-0084-41d3-84fb-6c5c1ae3b3e3",
+      "content": "huknwa",
+      "message_type": "text",
+      "media_path": null,
+      "thumb_path": null,
+      "created_at": "2026-05-21T03:56:05.939870+00:00"
+    },
+    {
+      "id": "dcbb7fdd-7361-4a63-aa1b-58fde1d3b9ac",
+      "sender_id": null,
+      "content": "1:38 voice call —",
+      "message_type": "system",
+      "media_path": null,
+      "created_at": "2026-05-21T03:57:51.685027+00:00",
+      "call_id": "fc473a0c-d41b-4653-bf9b-4102deaef92e"
+    }
+  ]
+}
