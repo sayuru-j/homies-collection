@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
-from app.auth import CurrentUser, change_user_pin
+from app.auth import CurrentUser, change_user_pin, get_user_by_id
 from app.chat_soft_delete import _safe_unlink_media
 from app.invite_codes import create_invite
 from app.config import DEFAULT_MEDIA_COMPRESSION_PERCENT
@@ -105,6 +105,23 @@ async def list_users(user: dict = CurrentUser):
 async def generate_invite_code(user: dict = CurrentUser):
     """Create a 10-minute invite code for a new friend to register."""
     return await create_invite(created_by=user["id"])
+
+
+@router.get("/{user_id}")
+async def get_user_profile(user_id: str, user: dict = CurrentUser):
+    if user_id == "me":
+        raise HTTPException(status_code=404, detail="User not found")
+    target = await get_user_by_id(user_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    profile = await get_profile(user_id)
+    return {
+        "id": target["id"],
+        "name": target["name"],
+        "display_name": profile.get("display_name") or target["name"],
+        "avatar": profile.get("avatar"),
+        "online": manager.is_online(user_id),
+    }
 
 
 @router.get("/online")

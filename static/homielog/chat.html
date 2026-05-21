@@ -84,6 +84,7 @@
             <i data-lucide="arrow-left" class="icon toolbar-icon" aria-hidden="true"></i>
           </button>
           <span class="channel-hash">@</span>
+          <button type="button" id="chat-header-avatar" class="chat-header-avatar hidden account-avatar avatar-placeholder" aria-label="View profile photo"></button>
           <h2 id="chat-title">Select a conversation</h2>
           <button type="button" class="icon-btn call-btn call-btn--voice hidden" id="call-btn" title="Voice call" aria-label="Start voice call" disabled>
             <i data-lucide="phone" class="icon" style="width:22px;height:22px" aria-hidden="true"></i>
@@ -187,6 +188,43 @@
         <h3>Everyone</h3>
         <ul id="users-list"></ul>
       </aside>
+    </div>
+  </div>
+
+  <div id="profile-sheet" class="profile-sheet hidden" role="dialog" aria-modal="true" aria-labelledby="profile-sheet-name">
+    <button type="button" class="profile-sheet-backdrop" aria-label="Close"></button>
+    <div class="profile-sheet-card">
+      <button type="button" class="profile-sheet-close icon-btn" aria-label="Close">
+        <i data-lucide="x" class="icon" aria-hidden="true"></i>
+      </button>
+      <div id="profile-sheet-avatar" class="profile-sheet-avatar" role="img" aria-label="Profile photo"></div>
+      <h2 id="profile-sheet-name" class="profile-sheet-name"></h2>
+      <p id="profile-sheet-status" class="profile-sheet-status"></p>
+    </div>
+  </div>
+
+  <div id="avatar-crop-modal" class="modal-overlay hidden">
+    <div class="modal modal-avatar-crop">
+      <div class="modal-header">
+        <h2>Crop profile photo</h2>
+        <button type="button" class="icon-btn modal-close" data-modal="avatar-crop-modal" aria-label="Close">
+          <i data-lucide="x" class="icon" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="modal-body avatar-crop-body">
+        <div class="avatar-crop-stage">
+          <canvas id="avatar-crop-canvas" width="280" height="280" aria-hidden="true"></canvas>
+          <div class="avatar-crop-frame" aria-hidden="true"></div>
+        </div>
+        <label class="avatar-crop-zoom-label">
+          <span>Zoom</span>
+          <input type="range" id="avatar-crop-zoom" min="1" max="3" step="0.01" value="1">
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary modal-close" data-modal="avatar-crop-modal">Cancel</button>
+        <button type="button" class="btn-primary" id="avatar-crop-apply">Use photo</button>
+      </div>
     </div>
   </div>
 

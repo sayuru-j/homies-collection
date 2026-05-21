@@ -160,4 +160,7 @@ async def upload_avatar(
     )
     profile["avatar"] = rel_path
     await save_profile(user["id"], profile)
+    from app.presence import manager
+
+    await manager.broadcast_presence()
     return {"ok": True, "avatar": rel_path, "url": f"/media/{user['id']}/avatar/{safe_name}"}

@@ -5,7 +5,9 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.auth import CurrentUser
 from app.config import DATA_DIR, MEDIA_DIR
+from app.user_access import assert_can_view_avatar
 from app.invite_codes import issue_startup_invite
 from app.maintenance_mode import (
     DEFAULT_MESSAGE,
@@ -88,7 +90,11 @@ async def serve_media(
     filename: str,
     download: bool = Query(False),
     name: str | None = Query(None),
+    user: dict = CurrentUser,
 ):
+    if media_type == "avatar":
+        await assert_can_view_avatar(user["id"], user_id)
+
     path = (MEDIA_DIR / user_id / media_type / filename).resolve()
     media_root = MEDIA_DIR.resolve()
     if not str(path).startswith(str(media_root)) or not path.is_file():

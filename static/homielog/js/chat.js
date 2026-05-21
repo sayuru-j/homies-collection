@@ -898,6 +898,7 @@ function closeChatView() {
   appEl.classList.remove("chat-open");
   currentChatId = null;
   currentChatMeta = null;
+  updateChatHeaderAvatar();
   chatTitleEl.textContent = "Select a conversation";
   messageInput.placeholder = "Message";
   showEmptyChat();
@@ -1461,6 +1462,243 @@ function closeMediaLightbox() {
   document.body.classList.remove("media-lightbox-open");
 }
 
+function closeProfileSheet() {
+  const sheet = document.getElementById("profile-sheet");
+  if (!sheet) return;
+  sheet.classList.add("hidden");
+  document.body.classList.remove("profile-sheet-open");
+}
+
+function renderProfileSheetAvatar(container, name, avatarPath) {
+  if (!container) return;
+  container.innerHTML = "";
+  container.classList.remove("avatar-placeholder");
+  container.style.background = "";
+  container.style.color = "";
+  container.style.fontSize = "";
+
+  if (avatarPath) {
+    const url = avatarPath.startsWith("/") ? avatarPath : mediaUrl(avatarPath);
+    const view = createProtectedImageView(url, {
+      className: "profile-sheet-protected-img",
+      alt: `${name || "User"} profile photo`,
+      maxW: 128,
+      maxH: 128,
+      fit: "cover",
+      fallbackW: 128,
+      fallbackH: 128,
+    });
+    view.style.cursor = "zoom-in";
+    view.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openMediaLightbox({ type: "image", url });
+    });
+    container.appendChild(view);
+    return;
+  }
+
+  container.classList.add("avatar-placeholder");
+  container.style.background = avatarColor(name);
+  container.textContent = initials(name);
+}
+
+function bindAvatarOpen(el, onActivate) {
+  if (!el || typeof onActivate !== "function") return;
+  el.classList.add("avatar-clickable");
+  if (!el.getAttribute("role")) el.setAttribute("role", "button");
+  if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "0");
+  const activate = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onActivate();
+  };
+  el.onclick = activate;
+  el.onkeydown = (e) => {
+    if (e.key === "Enter" || e.key === " ") activate(e);
+  };
+}
+
+async function openProfileSheet({ kind, userId, groupId, name, avatar, online, memberCount }) {
+  const sheet = document.getElementById("profile-sheet");
+  const nameEl = document.getElementById("profile-sheet-name");
+  const statusEl = document.getElementById("profile-sheet-status");
+  const avatarEl = document.getElementById("profile-sheet-avatar");
+  if (!sheet || !nameEl || !statusEl || !avatarEl) return;
+
+  let displayName = name || "Unknown";
+  let avatarPath = avatar ?? null;
+  let statusText = "";
+  let isOnline = false;
+
+  try {
+    if (kind === "group" && groupId) {
+      const data = await api(`/api/groups/${groupId}`);
+      const g = data.group || {};
+      displayName = g.name || displayName;
+      avatarPath = g.avatar ?? avatarPath;
+      const count = (data.members || g.members || []).length;
+      statusText = count ? `${count} member${count === 1 ? "" : "s"}` : "Group";
+    } else if (kind === "user" && userId) {
+      const data = await api(`/api/users/${userId}`);
+      displayName = data.display_name || data.name || displayName;
+      avatarPath = data.avatar ?? avatarPath;
+      isOnline = !!data.online;
+      statusText = isOnline ? "Online" : "Offline";
+    }
+  } catch {
+    if (kind === "group") {
+      statusText = memberCount
+        ? `${memberCount} member${memberCount === 1 ? "" : "s"}`
+        : "Group";
+    } else if (kind === "user") {
+      isOnline = !!online;
+      statusText = isOnline ? "Online" : "Offline";
+    }
+  }
+
+  nameEl.textContent = displayName;
+  statusEl.textContent = statusText;
+  statusEl.classList.toggle("profile-sheet-status--online", kind === "user" && isOnline);
+  renderProfileSheetAvatar(avatarEl, displayName, avatarPath);
+
+  sheet.classList.remove("hidden");
+  document.body.classList.add("profile-sheet-open");
+  refreshUiIcons(sheet);
+}
+
+function updateChatHeaderAvatar() {
+  const btn = document.getElementById("chat-header-avatar");
+  if (!btn) return;
+  if (!currentChatId || !currentChatMeta) {
+    btn.classList.add("hidden");
+    return;
+  }
+  const title = currentChatMeta.title || chatTitleEl?.textContent || "";
+  btn.classList.remove("hidden");
+  applyAvatarEl(btn, title, currentChatMeta.avatar, "0.85rem");
+
+  const isGroup = currentChatMeta.type === "group";
+  bindAvatarOpen(btn, () => {
+    if (isGroup) {
+      openProfileSheet({
+        kind: "group",
+        groupId: currentChatMeta.group_id,
+        name: title,
+        avatar: currentChatMeta.avatar,
+        memberCount: currentChatMeta.members?.length,
+      });
+    } else {
+      openProfileSheet({
+        kind: "user",
+        userId: currentChatMeta.id,
+        name: title,
+        avatar: currentChatMeta.avatar,
+      });
+    }
+  });
+}
+
+let avatarCropState = null;
+
+function closeAvatarCropModal() {
+  closeModal("avatar-crop-modal");
+  avatarCropState = null;
+  const input = document.getElementById("avatar-input");
+  if (input) input.value = "";
+}
+
+function drawAvatarCropPreview() {
+  const state = avatarCropState;
+  const canvas = document.getElementById("avatar-crop-canvas");
+  if (!state || !canvas) return;
+  const ctx = canvas.getContext("2d");
+  const size = canvas.width;
+  const img = state.image;
+  const zoom = state.zoom;
+  const scale = (size / Math.min(img.naturalWidth, img.naturalHeight)) * zoom;
+  const sw = img.naturalWidth * scale;
+  const sh = img.naturalHeight * scale;
+  const maxPanX = Math.max(0, (sw - size) / 2);
+  const maxPanY = Math.max(0, (sh - size) / 2);
+  state.panX = Math.max(-maxPanX, Math.min(maxPanX, state.panX));
+  state.panY = Math.max(-maxPanY, Math.min(maxPanY, state.panY));
+  ctx.clearRect(0, 0, size, size);
+  ctx.drawImage(img, (size - sw) / 2 + state.panX, (size - sh) / 2 + state.panY, sw, sh);
+}
+
+function openAvatarCropModal(file) {
+  const canvas = document.getElementById("avatar-crop-canvas");
+  const zoomInput = document.getElementById("avatar-crop-zoom");
+  if (!canvas || !file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      avatarCropState = { image: img, zoom: 1, panX: 0, panY: 0, fileName: file.name };
+      if (zoomInput) zoomInput.value = "1";
+      drawAvatarCropPreview();
+      openModal("avatar-crop-modal");
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function exportAvatarCropBlob(callback) {
+  const state = avatarCropState;
+  const srcCanvas = document.getElementById("avatar-crop-canvas");
+  if (!state || !srcCanvas) return;
+  const out = document.createElement("canvas");
+  const outSize = 512;
+  out.width = outSize;
+  out.height = outSize;
+  const ctx = out.getContext("2d");
+  ctx.drawImage(srcCanvas, 0, 0, srcCanvas.width, srcCanvas.height, 0, 0, outSize, outSize);
+  out.toBlob(
+    (blob) => {
+      if (!blob) return;
+      const base = (state.fileName || "avatar.jpg").replace(/\.[^.]+$/, "");
+      callback(new File([blob], `${base}.jpg`, { type: "image/jpeg" }));
+    },
+    "image/jpeg",
+    0.92
+  );
+}
+
+async function refreshAvatarsAfterOwnChange() {
+  const name = me?.display_name || me?.name;
+  const path = me?.avatar;
+  applyAvatarEl(document.getElementById("my-avatar"), name, path, "0.85rem");
+  applyAvatarEl(document.getElementById("profile-avatar-preview"), name, path, "2.25rem");
+  syncAvatarRemoveButton();
+  updateChatHeaderAvatar();
+  if (typeof loadOnline === "function") await loadOnline();
+  if (typeof loadUsers === "function") await loadUsers();
+  if (typeof loadChats === "function") await loadChats();
+  if (currentChatId && messagesEl) {
+    messagesEl.querySelectorAll(".message-group").forEach((group) => {
+      const av = group.querySelector(".message-avatar");
+      if (!av || !group.classList.contains("own-message")) return;
+      if (path && av.tagName === "IMG") {
+        av.src = mediaUrl(path);
+      } else if (path) {
+        const img = document.createElement("img");
+        img.className = "message-avatar";
+        img.src = mediaUrl(path);
+        img.alt = name;
+        av.replaceWith(img);
+      } else {
+        const ph = document.createElement("div");
+        ph.className = "message-avatar avatar-placeholder";
+        ph.style.background = avatarColor(name);
+        ph.textContent = initials(name);
+        av.replaceWith(ph);
+      }
+    });
+  }
+}
+
 const videoThumbEnsureCache = new Map();
 
 async function ensureVideoThumbnail(mediaPath) {
@@ -1915,7 +2153,17 @@ function matchesSearch(text) {
   return (text || "").toLowerCase().includes(searchQuery);
 }
 
-function buildDmItem({ id, name, avatar, online, preview, onClick, chatId }) {
+function buildDmItem({
+  id,
+  name,
+  avatar,
+  online,
+  preview,
+  onClick,
+  chatId,
+  chatType,
+  groupId,
+}) {
   const li = document.createElement("li");
   li.className = "dm-item";
   if (chatId && chatId === currentChatId) li.classList.add("active");
@@ -1924,6 +2172,7 @@ function buildDmItem({ id, name, avatar, online, preview, onClick, chatId }) {
 
   const wrap = document.createElement("div");
   wrap.className = "dm-avatar-wrap";
+  wrap.setAttribute("aria-label", `View ${name} profile photo`);
 
   if (avatar) {
     const img = document.createElement("img");
@@ -1945,6 +2194,22 @@ function buildDmItem({ id, name, avatar, online, preview, onClick, chatId }) {
     wrap.appendChild(dot);
   }
 
+  const isGroupRow = chatType === "group" || (chatId && chatId.startsWith("group_"));
+  const resolvedGroupId =
+    groupId || (chatId && chatId.startsWith("group_") ? chatId.replace("group_", "") : null);
+  bindAvatarOpen(wrap, () => {
+    if (isGroupRow) {
+      openProfileSheet({
+        kind: "group",
+        groupId: resolvedGroupId,
+        name,
+        avatar,
+      });
+    } else if (id) {
+      openProfileSheet({ kind: "user", userId: id, name, avatar, online });
+    }
+  });
+
   const meta = document.createElement("div");
   meta.className = "dm-meta";
   meta.innerHTML = `
@@ -1963,20 +2228,22 @@ function buildMemberItem(u, online) {
   li.className = "member-item";
   li.onclick = () => openDm(u.id);
 
+  const displayName = u.display_name || u.name;
   const wrap = document.createElement("div");
   wrap.className = "dm-avatar-wrap";
+  wrap.setAttribute("aria-label", `View ${displayName} profile photo`);
 
   if (u.avatar) {
     const img = document.createElement("img");
     img.className = "dm-avatar";
     img.src = mediaUrl(u.avatar);
-    img.alt = u.display_name || u.name;
+    img.alt = displayName;
     wrap.appendChild(img);
   } else {
     const ph = document.createElement("div");
     ph.className = "dm-avatar avatar-placeholder";
-    ph.style.background = avatarColor(u.display_name || u.name);
-    ph.textContent = initials(u.display_name || u.name);
+    ph.style.background = avatarColor(displayName);
+    ph.textContent = initials(displayName);
     wrap.appendChild(ph);
   }
 
@@ -1986,9 +2253,19 @@ function buildMemberItem(u, online) {
     wrap.appendChild(dot);
   }
 
+  bindAvatarOpen(wrap, () => {
+    openProfileSheet({
+      kind: "user",
+      userId: u.id,
+      name: displayName,
+      avatar: u.avatar,
+      online,
+    });
+  });
+
   const span = document.createElement("span");
   span.className = "member-name";
-  span.textContent = u.display_name || u.name;
+  span.textContent = displayName;
 
   li.appendChild(wrap);
   li.appendChild(span);
@@ -2344,19 +2621,30 @@ function buildMessageElement(m, options = {}) {
   group.dataset.messageId = m.id || "";
 
   if (!compact) {
+    let av;
     if (m.sender_avatar) {
-      const av = document.createElement("img");
+      av = document.createElement("img");
       av.className = "message-avatar";
       av.src = mediaUrl(m.sender_avatar);
       av.alt = author;
-      group.appendChild(av);
     } else {
-      const av = document.createElement("div");
+      av = document.createElement("div");
       av.className = "message-avatar avatar-placeholder";
       av.style.background = avatarColor(author);
       av.textContent = initials(author);
-      group.appendChild(av);
     }
+    if (m.sender_id) {
+      av.setAttribute("aria-label", `View ${author} profile photo`);
+      bindAvatarOpen(av, () => {
+        openProfileSheet({
+          kind: "user",
+          userId: m.sender_id,
+          name: author,
+          avatar: m.sender_avatar,
+        });
+      });
+    }
+    group.appendChild(av);
   }
 
   const content = document.createElement("div");
@@ -2803,11 +3091,14 @@ async function loadChats() {
     const preview = previewText(c.last_message);
     ul.appendChild(
       buildDmItem({
+        id: c.type === "dm" ? c.peer_id : undefined,
         name,
         avatar: c.avatar,
         online: c.online,
         preview,
         chatId: c.chat_id,
+        chatType: c.type,
+        groupId: c.group_id,
         onClick: () =>
           selectChat(
             c.chat_id,
@@ -2875,6 +3166,7 @@ async function selectChat(chatId, title, type, avatar, meta = null) {
   await loadInitialMessages(chatId);
   const hasMessages = messagesEl.querySelector(".message-group, .message-system") !== null;
   showActiveChat(title, hasMessages);
+  updateChatHeaderAvatar();
   scheduleScrollToEnd();
   updateCallButton();
   if (typeof HomiesEvents !== "undefined") HomiesEvents.updateChatToolbarMenu();
@@ -3377,6 +3669,7 @@ document.querySelectorAll(".modal-overlay").forEach((overlay) => {
     if (e.target !== overlay) return;
     overlay.classList.add("hidden");
     if (overlay.id === "profile-modal") switchSettingsTab("account");
+    if (overlay.id === "avatar-crop-modal") closeAvatarCropModal();
   });
 });
 
@@ -3519,7 +3812,13 @@ document.getElementById("media-lightbox")?.addEventListener("click", (e) => {
 });
 
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && !document.getElementById("media-lightbox")?.classList.contains("hidden")) {
+  if (e.key !== "Escape") return;
+  const sheet = document.getElementById("profile-sheet");
+  if (sheet && !sheet.classList.contains("hidden")) {
+    closeProfileSheet();
+    return;
+  }
+  if (!document.getElementById("media-lightbox")?.classList.contains("hidden")) {
     closeMediaLightbox();
   }
 });
@@ -3691,21 +3990,17 @@ document.getElementById("remove-avatar-btn")?.addEventListener("click", async ()
   if (btn) btn.disabled = true;
   try {
     await api("/api/users/me/avatar", { method: "DELETE" });
-    const name = me?.display_name || me?.name;
-    applyAvatarEl(document.getElementById("my-avatar"), name, null, "0.85rem");
-    applyAvatarEl(document.getElementById("profile-avatar-preview"), name, null, "2.25rem");
     await loadMe();
-    if (typeof loadOnline === "function") await loadOnline();
-    if (typeof loadUsers === "function") await loadUsers();
+    await refreshAvatarsAfterOwnChange();
   } catch (ex) {
     uploadStatus.textContent = ex.message || "Failed to remove photo";
     syncAvatarRemoveButton();
+  } finally {
+    if (btn) btn.disabled = false;
   }
 });
 
-document.getElementById("avatar-input").addEventListener("change", async (e) => {
-  const f = e.target.files[0];
-  if (!f) return;
+async function uploadAvatarFile(f) {
   const pct = getMediaCompressionPercent();
   const signal = beginActiveTransfer();
   try {
@@ -3738,24 +4033,87 @@ document.getElementById("avatar-input").addEventListener("change", async (e) => 
       });
       await new Promise((r) => setTimeout(r, 600));
     }
-    if (result.avatar || result.url) {
-      const path = result.avatar || result.url;
-      applyAvatarEl(document.getElementById("my-avatar"), me?.display_name || me?.name, path);
-      applyAvatarEl(
-        document.getElementById("profile-avatar-preview"),
-        me?.display_name || me?.name,
-        path,
-        "2.25rem"
-      );
-    }
     await loadMe();
+    await refreshAvatarsAfterOwnChange();
     setTransferStatus(null);
     closeModal("profile-modal");
   } catch (ex) {
     setTransferStatus(null);
     if (!isTransferCancelled(ex)) uploadStatus.textContent = ex.message;
+    throw ex;
   }
-  e.target.value = "";
+}
+
+document.getElementById("avatar-input").addEventListener("change", (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  openAvatarCropModal(f);
+});
+
+document.getElementById("avatar-crop-apply")?.addEventListener("click", () => {
+  exportAvatarCropBlob(async (file) => {
+    closeAvatarCropModal();
+    try {
+      await uploadAvatarFile(file);
+    } catch {
+      /* uploadAvatarFile surfaces errors */
+    }
+  });
+});
+
+document.getElementById("avatar-crop-zoom")?.addEventListener("input", (e) => {
+  if (!avatarCropState) return;
+  avatarCropState.zoom = parseFloat(e.target.value) || 1;
+  drawAvatarCropPreview();
+});
+
+const avatarCropCanvas = document.getElementById("avatar-crop-canvas");
+if (avatarCropCanvas) {
+  let cropDrag = null;
+  avatarCropCanvas.addEventListener("pointerdown", (e) => {
+    if (!avatarCropState) return;
+    cropDrag = { x: e.clientX, y: e.clientY, panX: avatarCropState.panX, panY: avatarCropState.panY };
+    avatarCropCanvas.setPointerCapture(e.pointerId);
+  });
+  avatarCropCanvas.addEventListener("pointermove", (e) => {
+    if (!cropDrag || !avatarCropState) return;
+    avatarCropState.panX = cropDrag.panX + (e.clientX - cropDrag.x);
+    avatarCropState.panY = cropDrag.panY + (e.clientY - cropDrag.y);
+    drawAvatarCropPreview();
+  });
+  avatarCropCanvas.addEventListener("pointerup", () => {
+    cropDrag = null;
+  });
+  avatarCropCanvas.addEventListener("pointercancel", () => {
+    cropDrag = null;
+  });
+}
+
+const myAvatarEl = document.getElementById("my-avatar");
+if (myAvatarEl) {
+  bindAvatarOpen(myAvatarEl, () => {
+    if (!me) return;
+    openProfileSheet({
+      kind: "user",
+      userId: me.id,
+      name: me.display_name || me.name,
+      avatar: me.avatar,
+      online: true,
+    });
+  });
+}
+
+document.getElementById("profile-sheet")?.addEventListener("click", (e) => {
+  if (
+    e.target.classList.contains("profile-sheet-backdrop") ||
+    e.target.closest(".profile-sheet-close")
+  ) {
+    closeProfileSheet();
+  }
+});
+
+document.querySelectorAll('[data-modal="avatar-crop-modal"]').forEach((btn) => {
+  btn.addEventListener("click", () => closeAvatarCropModal());
 });
 
 document.getElementById("logout-btn").onclick = async () => {
