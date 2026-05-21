@@ -4,10 +4,13 @@ HomieLog is a self-hosted chat application for friends and small groups. It runs
 
 This document describes the full system as built end-to-end, including setup, architecture, every major feature, HTTPS/voice calling, TURN relay, and operational notes.
 
+**Production deployment (replicate on a new VM):** [DEPLOY.md](./DEPLOY.md) — Azure, Docker, Caddy, coturn, DNS, backups, redeploy.
+
 ---
 
 ## Table of contents
 
+0. [Production deployment](./DEPLOY.md) (separate runbook)
 1. [Quick start](#quick-start)
 2. [Architecture](#architecture)
 3. [Running HomieLog](#running-homielog)
@@ -72,7 +75,7 @@ flowchart TB
     Store[JSON + files in data/]
   end
 
-  subgraph turn [Optional TURN VM]
+  subgraph turn [TURN on same VM host]
     Coturn[coturn 52.230.105.30:3478]
   end
 
@@ -337,7 +340,7 @@ Requires **HTTPS** (or localhost) on phones.
 
 Relay logic: `app/call_signaling.py`, wired in `app/routers/ws.py`.
 
-### ICE servers (`static/js/voice-call.js`)
+### ICE servers (`static/shared/js/ice-servers.js`)
 
 ```javascript
 const ICE_SERVERS = [
@@ -473,7 +476,9 @@ HomieLog dev HTTPS uses self-signed **trustme** certificates. Traffic is **encry
 
 ## TURN server (Azure VM)
 
-You deployed **coturn** on a small Azure VM for relay when WebRTC cannot connect peer-to-peer.
+**coturn** runs on the **host** (systemd), not in Docker, on the same VM as the app (`relay`). Full install steps, NSG, DNS, and redeploy: **[DEPLOY.md](./DEPLOY.md)**.
+
+You deployed **coturn** for relay when WebRTC cannot connect peer-to-peer.
 
 ### Server details (your setup)
 
@@ -701,7 +706,8 @@ Static files are grouped by site under `static/` (see `static/README.md`).
 - **Video calls** (same signaling, add video tracks).
 - **Production LiveKit** (TLS, autoscaling, telemetry) for large deployments.
 - **End-to-end encryption** (Signal-style; major undertaking).
-- **Production deploy:** reverse proxy (Caddy/nginx) + Let’s Encrypt instead of trustme.
+- **Session cookies:** `secure=True` in production (`auth_routes.py`) — see [DEPLOY.md](./DEPLOY.md).
+- **Short-lived TURN credentials** from API instead of static JS.
 
 ---
 

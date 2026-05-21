@@ -4,6 +4,8 @@ FastAPI chat app with local JSON/file storage in `data/`.
 
 **Full guide (features, HTTPS, calls, TURN, APIs):** see [DOCUMENTATION.md](./DOCUMENTATION.md).
 
+**Production deploy (Azure VM, Docker, Caddy, coturn):** see [DEPLOY.md](./DEPLOY.md).
+
 ## Setup
 
 ```bash

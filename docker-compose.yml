@@ -1,7 +1,7 @@
 # Production: HomieLog + Caddy (HTTPS + WebSockets).
-# On VM: copy this folder (or at least Caddyfile, docker-compose.yml, image) to /opt/appsvc
+# Full runbook: DEPLOY.md
 #   mkdir -p /opt/appsvc/data && chown -R 1000:1000 /opt/appsvc
-#   docker compose up -d --build
+#   git clone … /opt/appsvc && docker compose up -d --build
 
 services:
   homielog:
