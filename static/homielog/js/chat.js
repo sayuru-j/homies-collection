@@ -124,11 +124,146 @@ function anyCallIdle() {
 /** User collapsed full-screen call UI; call continues in background. */
 let callUiMinimized = false;
 
+const CALL_PIP_POS_KEY = "homies-call-pip-pos";
+let callPipDrag = { active: false, pointerId: null, offsetX: 0, offsetY: 0 };
+
+function resetCallPipPosition() {
+  const card = document.getElementById("call-card");
+  if (!card) return;
+  card.style.left = "";
+  card.style.top = "";
+  card.style.bottom = "";
+  card.style.transform = "";
+  card.classList.remove("call-pip-custom-pos", "call-pip-dragging");
+  try {
+    sessionStorage.removeItem(CALL_PIP_POS_KEY);
+  } catch (_) {
+    /* ignore */
+  }
+}
+
+function applyCallPipPosition() {
+  const card = document.getElementById("call-card");
+  if (!card) return;
+  try {
+    const raw = sessionStorage.getItem(CALL_PIP_POS_KEY);
+    if (!raw) return;
+    const { left, top } = JSON.parse(raw);
+    if (typeof left !== "number" || typeof top !== "number") return;
+    card.classList.add("call-pip-custom-pos");
+    card.style.left = `${left}px`;
+    card.style.top = `${top}px`;
+    card.style.bottom = "auto";
+    card.style.transform = "none";
+  } catch (_) {
+    /* ignore */
+  }
+}
+
+function saveCallPipPosition(left, top) {
+  try {
+    sessionStorage.setItem(CALL_PIP_POS_KEY, JSON.stringify({ left, top }));
+  } catch (_) {
+    /* ignore */
+  }
+}
+
+function clampCallPipPosition(left, top, card) {
+  const pad = 8;
+  const w = card.offsetWidth || 320;
+  const h = card.offsetHeight || 72;
+  const maxLeft = Math.max(pad, window.innerWidth - w - pad);
+  const maxTop = Math.max(pad, window.innerHeight - h - pad);
+  return {
+    left: Math.min(maxLeft, Math.max(pad, left)),
+    top: Math.min(maxTop, Math.max(pad, top)),
+  };
+}
+
+function initCallPipDrag() {
+  const card = document.getElementById("call-card");
+  const overlay = document.getElementById("call-overlay");
+  if (!card || card.dataset.pipDragInit) return;
+  card.dataset.pipDragInit = "1";
+
+  function pipActive() {
+    return overlay?.classList.contains("call-overlay--minimized");
+  }
+
+  function isDragBlockedTarget(target) {
+    return !!target.closest(
+      ".call-action-btn, .call-chrome-btn, .call-mute-btn, .call-record-btn, .call-end-btn, button, a, input"
+    );
+  }
+
+  card.addEventListener("pointerdown", (e) => {
+    if (!pipActive() || isDragBlockedTarget(e.target)) return;
+    const rect = card.getBoundingClientRect();
+    callPipDrag.active = true;
+    callPipDrag.pointerId = e.pointerId;
+    callPipDrag.offsetX = e.clientX - rect.left;
+    callPipDrag.offsetY = e.clientY - rect.top;
+    card.classList.add("call-pip-dragging", "call-pip-custom-pos");
+    card.style.bottom = "auto";
+    card.style.transform = "none";
+    try {
+      card.setPointerCapture(e.pointerId);
+    } catch (_) {
+      /* ignore */
+    }
+    e.preventDefault();
+  });
+
+  card.addEventListener("pointermove", (e) => {
+    if (!callPipDrag.active || e.pointerId !== callPipDrag.pointerId) return;
+    const pos = clampCallPipPosition(
+      e.clientX - callPipDrag.offsetX,
+      e.clientY - callPipDrag.offsetY,
+      card
+    );
+    card.style.left = `${pos.left}px`;
+    card.style.top = `${pos.top}px`;
+    saveCallPipPosition(pos.left, pos.top);
+  });
+
+  function endDrag(e) {
+    if (!callPipDrag.active) return;
+    if (e && e.pointerId !== callPipDrag.pointerId) return;
+    callPipDrag.active = false;
+    callPipDrag.pointerId = null;
+    card.classList.remove("call-pip-dragging");
+    try {
+      card.releasePointerCapture(e.pointerId);
+    } catch (_) {
+      /* ignore */
+    }
+  }
+
+  card.addEventListener("pointerup", endDrag);
+  card.addEventListener("pointercancel", endDrag);
+  window.addEventListener("resize", () => {
+    if (!pipActive() || !card.classList.contains("call-pip-custom-pos")) return;
+    const left = parseFloat(card.style.left);
+    const top = parseFloat(card.style.top);
+    if (Number.isNaN(left) || Number.isNaN(top)) return;
+    const pos = clampCallPipPosition(left, top, card);
+    card.style.left = `${pos.left}px`;
+    card.style.top = `${pos.top}px`;
+    saveCallPipPosition(pos.left, pos.top);
+  });
+}
+
 function setCallMinimized(minimized) {
   callUiMinimized = !!minimized;
   const overlay = document.getElementById("call-overlay");
+  const card = document.getElementById("call-card");
   if (overlay && !overlay.classList.contains("hidden")) {
     overlay.classList.toggle("call-overlay--minimized", callUiMinimized);
+  }
+  if (callUiMinimized) {
+    applyCallPipPosition();
+  } else {
+    resetCallPipPosition();
   }
 }
 
@@ -140,6 +275,7 @@ function syncCallChrome(ui) {
 
   if (ui.state === "idle" || ui.state === "incoming") {
     callUiMinimized = false;
+    resetCallPipPosition();
   }
 
   const showMinimized =
@@ -520,6 +656,7 @@ function handleCallLogged(message, chatIdLogged) {
 
 function initVoiceCall() {
   if (typeof VoiceCall === "undefined") return;
+  initCallPipDrag();
   VoiceCall.init({
     getMe: () => me,
     sendSignal: (msg) => {
@@ -562,6 +699,7 @@ function initVoiceCall() {
     const overlay = document.getElementById("call-overlay");
     if (overlay && !overlay.classList.contains("hidden")) {
       overlay.classList.add("call-overlay--minimized");
+      applyCallPipPosition();
       document.getElementById("call-expand-btn")?.classList.remove("hidden");
       document.getElementById("call-minimize-btn")?.classList.add("hidden");
     }
