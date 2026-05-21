@@ -3,18 +3,10 @@
  * Works without LiveKit for groups up to mesh_group_max members.
  */
 (function () {
-  const ICE_SERVERS = [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" },
-    {
-      urls: [
-        "turn:4.193.96.33:3478?transport=udp",
-        "turn:4.193.96.33:3478?transport=tcp",
-      ],
-      username: "homies",
-      credential: "fGrPL8PE0XGq7SqJOIILzYrM8r6BmGPR",
-    },
-  ];
+  const ICE_SERVERS =
+    typeof HOMIES_ICE_SERVERS !== "undefined"
+      ? HOMIES_ICE_SERVERS
+      : [{ urls: "stun:stun.l.google.com:19302" }];
 
   let sendSignal = null;
   let getMe = () => null;

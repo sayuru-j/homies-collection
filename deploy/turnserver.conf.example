@@ -1,0 +1,15 @@
+# coturn on relay VM (host install, not Docker).
+# Copy: sudo cp deploy/turnserver.conf.example /etc/turnserver.conf
+# Set relay-ip to this VM's Azure private IP (ip -4 addr show eth0).
+# Enable: echo 'TURNSERVER_ENABLED=1' | sudo tee /etc/default/coturn
+# Restart: sudo systemctl restart coturn
+
+listening-port=3478
+fingerprint
+lt-cred-mech
+user=homies:fGrPL8PE0XGq7SqJOIILzYrM8r6BmGPR
+realm=52.230.105.30
+external-ip=52.230.105.30
+relay-ip=REPLACE_WITH_PRIVATE_IP
+min-port=49152
+max-port=65535

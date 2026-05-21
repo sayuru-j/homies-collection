@@ -73,7 +73,7 @@ flowchart TB
   end
 
   subgraph turn [Optional TURN VM]
-    Coturn[coturn 4.193.96.33:3478]
+    Coturn[coturn 52.230.105.30:3478]
   end
 
   Web -->|HTTPS REST| API
@@ -345,8 +345,8 @@ const ICE_SERVERS = [
   { urls: "stun:stun1.l.google.com:19302" },
   {
     urls: [
-      "turn:4.193.96.33:3478?transport=udp",
-      "turn:4.193.96.33:3478?transport=tcp",
+      "turn:52.230.105.30:3478?transport=udp",
+      "turn:52.230.105.30:3478?transport=tcp",
     ],
     username: "homies",
     credential: "<your-turn-password>",
@@ -479,8 +479,8 @@ You deployed **coturn** on a small Azure VM for relay when WebRTC cannot connect
 
 | Setting | Value |
 |---------|--------|
-| Public IP | `4.193.96.33` |
-| Private IP (Azure) | `10.0.0.5` |
+| Public IP | `52.230.105.30` (`relay` VM, same as `app.green-valley.homes`) |
+| Private IP (Azure) | Your NIC private IP — set as `relay-ip` in coturn (see `deploy/turnserver.conf.example`) |
 | Port | `3478` (UDP + TCP) |
 | Relay ports | `49152–65535` (UDP) |
 | Username | `homies` |
@@ -493,9 +493,9 @@ listening-port=3478
 fingerprint
 lt-cred-mech
 user=homies:YOUR_PASSWORD
-realm=4.193.96.33
-external-ip=4.193.96.33
-relay-ip=10.0.0.5
+realm=52.230.105.30
+external-ip=52.230.105.30
+relay-ip=<AZURE_PRIVATE_IP>
 min-port=49152
 max-port=65535
 ```
@@ -508,10 +508,12 @@ max-port=65535
 ### Verify TURN
 
 ```bash
-turnutils_uclient -v -u homies -w 'YOUR_PASSWORD' 4.193.96.33
+turnutils_uclient -v -u homies -w 'YOUR_PASSWORD' 52.230.105.30
 ```
 
-Look for `success` and `Received relay addr: 4.193.96.33:...`. A trailing `channel bind: error 403` in the test tool is often harmless for real browser calls.
+Look for `success` and `Received relay addr: 52.230.105.30:...`. A trailing `channel bind: error 403` in the test tool is often harmless for real browser calls.
+
+ICE config in the app: `static/shared/js/ice-servers.js` (loaded before call scripts).
 
 ### Domain
 
@@ -720,7 +722,7 @@ Static files are grouped by site under `static/` (see `static/README.md`).
 13. **1:1 voice calls** (WebRTC + WebSocket signaling).
 16. **Group calls** (LiveKit SFU, `static/js/group-call.js`, token API).
 14. System message when conversation history is deleted.
-15. **TURN server** on Azure (`4.193.96.33`) wired in `voice-call.js`.
+15. **TURN server** on the `relay` VM (`52.230.105.30`) via `static/shared/js/ice-servers.js`.
 
 ---
 
