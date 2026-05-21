@@ -23,7 +23,12 @@ async def _user_from_token(token: str) -> dict | None:
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    from app.maintenance_mode import is_maintenance_enabled
     from app.presence import manager
+
+    if await is_maintenance_enabled():
+        await websocket.close(code=1013, reason="Server maintenance")
+        return
 
     token = websocket.cookies.get("session") or websocket.query_params.get("token")
     if not token:

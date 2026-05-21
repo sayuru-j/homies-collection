@@ -4,159 +4,249 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="theme-color" content="#1a1b1e">
-  <title>Server Admin</title>
+  <meta name="theme-color" content="#0c0e12">
+  <title>HomieLog Control Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/admin/css/admin.css">
 </head>
 <body>
   <div id="login-screen" class="login-screen">
     <div class="login-card">
-      <h1>Server Admin</h1>
-      <p class="login-hint">HomieLog control panel</p>
+      <div class="brand">
+        <span class="brand-mark">HL</span>
+        <div>
+          <h1>Control Panel</h1>
+          <p>HomieLog server administration</p>
+        </div>
+      </div>
       <form id="admin-login-form">
-        <label>Admin password
-          <input type="password" id="admin-password" autocomplete="current-password" required>
+        <label class="field-label">Administrator password
+          <input type="password" id="admin-password" autocomplete="current-password" required placeholder="••••••••••••">
         </label>
-        <p id="login-error" class="error hidden"></p>
-        <button type="submit" class="btn-primary">Sign in</button>
+        <p id="login-error" class="field-error hidden"></p>
+        <button type="submit" class="btn btn-primary btn-block">Sign in</button>
       </form>
     </div>
   </div>
 
-  <div id="dashboard" class="dashboard hidden">
-    <header class="topbar">
-      <div class="topbar-title">
-        <span class="logo">ADM</span>
-        <h1>Server control</h1>
+  <div id="dashboard" class="app-shell hidden">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-mark">HL</span>
+        <span class="brand-text">Control Panel</span>
       </div>
-      <div class="topbar-actions">
-        <button type="button" class="btn-ghost" id="btn-refresh">Refresh</button>
-        <button type="button" class="btn-ghost" id="btn-logout">Log out</button>
+      <nav class="sidebar-nav">
+        <button type="button" class="nav-item active" data-tab="overview"><span class="nav-icon">◉</span> Overview</button>
+        <button type="button" class="nav-item" data-tab="server"><span class="nav-icon">⚙</span> Server</button>
+        <button type="button" class="nav-item" data-tab="users"><span class="nav-icon">👤</span> Users</button>
+        <button type="button" class="nav-item" data-tab="chats"><span class="nav-icon">💬</span> Chats</button>
+        <button type="button" class="nav-item" data-tab="media"><span class="nav-icon">🖼</span> Media</button>
+        <button type="button" class="nav-item" data-tab="events"><span class="nav-icon">📅</span> Events</button>
+        <button type="button" class="nav-item" data-tab="tools"><span class="nav-icon">🔧</span> Tools</button>
+      </nav>
+      <div class="sidebar-footer">
+        <button type="button" class="btn btn-ghost btn-block" id="btn-logout">Sign out</button>
       </div>
-    </header>
+    </aside>
 
-    <nav class="tabs" role="tablist">
-      <button type="button" class="tab active" data-tab="overview">Overview</button>
-      <button type="button" class="tab" data-tab="users">Users</button>
-      <button type="button" class="tab" data-tab="chats">Chats</button>
-      <button type="button" class="tab" data-tab="media">Media</button>
-      <button type="button" class="tab" data-tab="events">Events</button>
-      <button type="button" class="tab" data-tab="maintenance">Maintenance</button>
-    </nav>
-
-    <main class="content">
-      <section id="panel-overview" class="panel active">
-        <div id="stats-grid" class="stats-grid"></div>
-      </section>
-
-      <section id="panel-users" class="panel">
-        <div class="panel-toolbar">
-          <h2>User accounts</h2>
+    <div class="main-area">
+      <header class="topbar">
+        <div>
+          <h2 id="page-title">Overview</h2>
+          <p class="topbar-sub" id="page-subtitle">System health and capacity</p>
         </div>
-        <div class="table-wrap">
-          <table class="data-table" id="users-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>ID</th>
-                <th>Online</th>
-                <th>Sessions</th>
-                <th>Media</th>
-                <th>Created</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+        <div class="topbar-actions">
+          <span id="status-pill" class="status-pill status-ok">Online</span>
+          <button type="button" class="btn btn-secondary" id="btn-refresh">Refresh</button>
         </div>
-      </section>
+      </header>
 
-      <section id="panel-chats" class="panel">
-        <div class="panel-toolbar"><h2>Conversations</h2></div>
-        <div class="table-wrap">
-          <table class="data-table" id="chats-table">
-            <thead>
-              <tr>
-                <th>Chat ID</th>
-                <th>Type</th>
-                <th>Name</th>
-                <th>Messages</th>
-                <th>Members</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section id="panel-media" class="panel">
-        <div class="panel-toolbar">
-          <h2>Media files</h2>
-          <label class="filter-label">User ID filter
-            <input type="text" id="media-user-filter" placeholder="optional user uuid">
-          </label>
-          <button type="button" class="btn-secondary" id="btn-media-load">Load</button>
-        </div>
-        <div class="table-wrap">
-          <table class="data-table" id="media-table">
-            <thead>
-              <tr>
-                <th>Path</th>
-                <th>Size</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section id="panel-events" class="panel">
-        <div class="panel-toolbar"><h2>Group events</h2></div>
-        <div class="table-wrap">
-          <table class="data-table" id="events-table">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Event ID</th>
-                <th>Group</th>
-                <th>Posts</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section id="panel-maintenance" class="panel">
-        <h2>Maintenance</h2>
-        <div class="maint-grid">
-          <div class="maint-card">
-            <h3>Invite codes</h3>
-            <p>Clear all codes in <code>invite_codes.json</code>.</p>
-            <button type="button" class="btn-secondary" data-action="clear-invites">Clear invites</button>
-            <button type="button" class="btn-primary" data-action="create-invite">Create new invite</button>
-            <pre id="invite-result" class="result-box hidden"></pre>
+      <main class="content">
+        <section id="panel-overview" class="panel active">
+          <div id="maint-alert" class="alert alert-warn hidden"></div>
+          <div class="grid-2">
+            <div class="card card-disk">
+              <div class="card-head">
+                <h3>VM disk</h3>
+                <span class="muted" id="disk-root-path">/</span>
+              </div>
+              <div class="disk-meter">
+                <div class="disk-bar" id="disk-root-bar"></div>
+              </div>
+              <div class="disk-stats">
+                <span><strong id="disk-root-used">—</strong> used</span>
+                <span id="disk-root-free" class="muted">— free</span>
+                <span id="disk-root-total" class="muted">— total</span>
+              </div>
+            </div>
+            <div class="card card-disk">
+              <div class="card-head">
+                <h3>App data volume</h3>
+                <span class="muted">data/</span>
+              </div>
+              <div class="disk-meter">
+                <div class="disk-bar disk-bar-alt" id="disk-data-bar"></div>
+              </div>
+              <div class="disk-stats">
+                <span><strong id="disk-data-used">—</strong> used on mount</span>
+                <span id="disk-data-pct" class="muted">—</span>
+              </div>
+            </div>
           </div>
-          <div class="maint-card">
-            <h3>Upload chunks</h3>
-            <p>Remove temporary files in <code>data/uploads/chunks</code>.</p>
-            <button type="button" class="btn-secondary" data-action="clear-chunks">Clear chunks</button>
+          <div id="stats-grid" class="stats-grid"></div>
+          <div class="card">
+            <h3>Storage breakdown</h3>
+            <div class="table-wrap table-compact">
+              <table class="data-table" id="storage-table">
+                <thead><tr><th>Area</th><th>Size</th><th>Share</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
           </div>
-          <div class="maint-card">
-            <h3>User sessions</h3>
-            <p>Force logout everyone (clears <code>sessions.json</code>).</p>
-            <button type="button" class="btn-warn" data-action="clear-sessions">Clear all sessions</button>
+          <div class="card">
+            <h3>Runtime</h3>
+            <dl class="info-dl" id="system-dl"></dl>
           </div>
-        </div>
-        <p id="maint-status" class="status-msg"></p>
-      </section>
-    </main>
+        </section>
+
+        <section id="panel-server" class="panel">
+          <div class="card card-danger-zone">
+            <h3>Maintenance mode</h3>
+            <p class="card-desc">Takes the public app offline (503). Admin panel and APIs stay available. Disconnects all WebSockets.</p>
+            <label class="field-label">Message shown to users
+              <input type="text" id="maint-message" maxlength="500" placeholder="Temporarily offline for maintenance…">
+            </label>
+            <div class="btn-row">
+              <button type="button" class="btn btn-danger" id="btn-maint-on">Enable maintenance</button>
+              <button type="button" class="btn btn-primary" id="btn-maint-off">Bring server online</button>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Permanent registration code</h3>
+            <p class="card-desc">Optional 4-digit code that never expires and can be reused by many new accounts. Leave empty and save to disable.</p>
+            <label class="field-label">Code (4 digits)
+              <input type="text" id="perm-invite-code" pattern="\d{4}" maxlength="4" inputmode="numeric" autocomplete="off" placeholder="e.g. 2026">
+            </label>
+            <p id="perm-invite-status" class="muted"></p>
+            <div class="btn-row">
+              <button type="button" class="btn btn-primary" id="btn-perm-invite-save">Save permanent code</button>
+              <button type="button" class="btn btn-secondary" id="btn-perm-invite-clear">Disable</button>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Broadcast to online users</h3>
+            <textarea id="broadcast-text" rows="3" maxlength="2000" placeholder="Announcement shown in chat for connected users…"></textarea>
+            <button type="button" class="btn btn-secondary" id="btn-broadcast">Send broadcast</button>
+          </div>
+          <div class="card">
+            <h3>Data backups</h3>
+            <p class="card-desc">Creates <code>data/backups/homies-data_*.tar.gz</code> on the server.</p>
+            <button type="button" class="btn btn-primary" id="btn-backup">Create backup now</button>
+            <div class="table-wrap table-compact" style="margin-top:1rem">
+              <table class="data-table" id="backups-table">
+                <thead><tr><th>File</th><th>Size</th><th>Created</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="panel-users" class="panel">
+          <div class="table-wrap">
+            <table class="data-table" id="users-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Status</th>
+                  <th>Sessions</th>
+                  <th>Media</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="panel-chats" class="panel">
+          <div class="table-wrap">
+            <table class="data-table" id="chats-table">
+              <thead>
+                <tr><th>Chat</th><th>Type</th><th>Messages</th><th>Members</th><th></th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="panel-media" class="panel">
+          <div class="toolbar">
+            <input type="text" id="media-user-filter" class="input" placeholder="Filter by user ID (optional)">
+            <button type="button" class="btn btn-secondary" id="btn-media-load">Load files</button>
+            <button type="button" class="btn btn-warn" id="btn-orphan-scan">Scan orphans</button>
+            <button type="button" class="btn btn-danger" id="btn-orphan-purge">Purge orphans</button>
+          </div>
+          <pre id="orphan-summary" class="code-block hidden"></pre>
+          <div class="table-wrap">
+            <table class="data-table" id="media-table">
+              <thead><tr><th>Path</th><th>Size</th><th></th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="panel-events" class="panel">
+          <div class="table-wrap">
+            <table class="data-table" id="events-table">
+              <thead><tr><th>Title</th><th>Event</th><th>Group</th><th>Posts</th><th></th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="panel-tools" class="panel">
+          <div class="tools-grid">
+            <div class="card">
+              <h3>Invite codes</h3>
+              <p class="card-desc">Registration codes for new accounts.</p>
+              <div class="btn-row">
+                <button type="button" class="btn btn-secondary" data-action="clear-invites">Clear all</button>
+                <button type="button" class="btn btn-primary" data-action="create-invite">Generate code</button>
+              </div>
+              <pre id="invite-result" class="code-block hidden"></pre>
+            </div>
+            <div class="card">
+              <h3>Upload chunks</h3>
+              <p class="card-desc">Temporary partial uploads.</p>
+              <button type="button" class="btn btn-secondary" data-action="clear-chunks">Clear chunk cache</button>
+            </div>
+            <div class="card">
+              <h3>Sessions</h3>
+              <p class="card-desc">Force every user to log in again.</p>
+              <button type="button" class="btn btn-warn" data-action="clear-sessions">Clear all sessions</button>
+            </div>
+          </div>
+          <p id="tools-status" class="muted"></p>
+        </section>
+      </main>
+    </div>
   </div>
 
-  <div id="toast" class="toast hidden" role="status"></div>
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-backdrop" data-modal-close></div>
+    <div class="modal-box">
+      <h3 id="modal-title">Confirm</h3>
+      <p id="modal-body"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>
+        <button type="button" class="btn btn-danger" id="modal-confirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
 
   <script src="/static/admin/js/admin.js"></script>
 </body>

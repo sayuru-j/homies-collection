@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException
 
-from app.config import INVITE_TTL_SECONDS, INVITES_FILE
+from app.config import INVITE_TTL_SECONDS, INVITES_FILE, PERMANENT_INVITE_FILE
 from app.storage import read_json, write_json
 
 logger = logging.getLogger("homies")
@@ -82,11 +82,63 @@ async def create_invite(created_by: str | None = None) -> dict:
     }
 
 
+async def get_permanent_invite() -> dict:
+    """Admin-configured reusable registration code (optional)."""
+    data = await read_json(
+        PERMANENT_INVITE_FILE,
+        default={"enabled": False, "code": None, "set_at": None},
+    )
+    return {
+        "enabled": bool(data.get("enabled") and data.get("code")),
+        "code": data.get("code"),
+        "set_at": data.get("set_at"),
+    }
+
+
+async def set_permanent_invite(code: str | None) -> dict:
+    """
+    Set or clear the permanent invite code.
+    Pass None or empty string to disable. Otherwise exactly 4 digits.
+    """
+    if not code or not str(code).strip():
+        await write_json(
+            PERMANENT_INVITE_FILE,
+            {"enabled": False, "code": None, "set_at": None, "set_by": None},
+        )
+        return await get_permanent_invite()
+
+    normalized = normalize_invite_code(code)
+    if len(normalized) != INVITE_CODE_LENGTH:
+        raise ValueError("Permanent invite must be exactly 4 digits")
+
+    payload = {
+        "enabled": True,
+        "code": normalized,
+        "set_at": _now().isoformat(),
+        "set_by": "admin",
+    }
+    await write_json(PERMANENT_INVITE_FILE, payload)
+    logger.info("Permanent invite code updated (reusable registration)")
+    return await get_permanent_invite()
+
+
+async def _matches_permanent_invite(normalized: str) -> bool:
+    perm = await get_permanent_invite()
+    return perm["enabled"] and perm.get("code") == normalized
+
+
 async def consume_invite(code: str, used_by: str | None = None) -> None:
-    """Mark an invite as used. Raises HTTPException if invalid or expired."""
+    """Validate registration code (permanent or one-time). Raises HTTPException if invalid."""
     normalized = normalize_invite_code(code)
     if len(normalized) != INVITE_CODE_LENGTH:
         raise HTTPException(status_code=400, detail="Invalid invite code")
+
+    if await _matches_permanent_invite(normalized):
+        logger.info(
+            "Registration via permanent invite%s",
+            f" (user {used_by})" if used_by else "",
+        )
+        return
 
     data = await _load_invites()
     _purge_expired(data)

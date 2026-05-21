@@ -1,16 +1,49 @@
 import mimetypes
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import DATA_DIR, MEDIA_DIR
 from app.invite_codes import issue_startup_invite
+from app.maintenance_mode import (
+    DEFAULT_MESSAGE,
+    get_maintenance_state,
+    is_maintenance_enabled,
+    path_allowed_during_maintenance,
+)
 from app.routers import admin, auth_routes, calls, chats, events, groups, locations, media, users, ws
 from app.storage import _ensure_dirs
 
 app = FastAPI(title="HomieLog", version="1.0.0")
+
+
+@app.middleware("http")
+async def maintenance_middleware(request: Request, call_next):
+    if not await is_maintenance_enabled():
+        return await call_next(request)
+    path = request.url.path
+    if path_allowed_during_maintenance(path):
+        return await call_next(request)
+    state = await get_maintenance_state()
+    message = state.get("message") or DEFAULT_MESSAGE
+    if path.startswith("/api/"):
+        return JSONResponse(
+            status_code=503,
+            content={"detail": message, "maintenance": True},
+        )
+    import html as html_module
+
+    safe_msg = html_module.escape(message)
+    html = f"""<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Maintenance</title>
+<style>body{{font-family:system-ui,sans-serif;background:#0f1117;color:#e8e9ed;
+display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:2rem}}
+.box{{max-width:420px;text-align:center}}h1{{font-size:1.5rem}}p{{color:#9a9dad;line-height:1.5}}</style>
+</head><body><div class="box"><h1>Under maintenance</h1><p>{safe_msg}</p></div></body></html>"""
+    return HTMLResponse(content=html, status_code=503)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "static"

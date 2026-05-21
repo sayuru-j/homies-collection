@@ -47,5 +47,21 @@ class ConnectionManager:
         for user_id in list(self.active.keys()):
             await self.send_to_user(user_id, message)
 
+    async def disconnect_user(self, user_id: str, reason: str = "admin_disconnect") -> int:
+        """Close all WebSocket connections for a user."""
+        closed = 0
+        for ws in list(self.active.get(user_id, [])):
+            try:
+                await ws.close(code=4000, reason=reason[:120])
+                closed += 1
+            except Exception:
+                pass
+            self.ws_to_user.pop(ws, None)
+        if user_id in self.active:
+            del self.active[user_id]
+        if closed:
+            await self.broadcast_presence()
+        return closed
+
 
 manager = ConnectionManager()

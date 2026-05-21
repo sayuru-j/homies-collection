@@ -14,6 +14,7 @@ CHUNKS_DIR = DATA_DIR / "uploads" / "chunks"
 USERS_FILE = AUTH_DIR / "users.json"
 SESSIONS_FILE = AUTH_DIR / "sessions.json"
 INVITES_FILE = AUTH_DIR / "invite_codes.json"
+PERMANENT_INVITE_FILE = AUTH_DIR / "permanent_invite.json"
 ADMIN_SESSIONS_FILE = AUTH_DIR / "admin_sessions.json"
 
 # Override on the VM: ADMIN_PASSWORD in .env or environment

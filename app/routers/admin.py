@@ -12,21 +12,30 @@ from app.admin_auth import (
     verify_admin_password,
 )
 from app.admin_service import (
+    broadcast_message,
     clear_all_invites,
     clear_all_user_sessions,
     clear_upload_chunks,
     create_bootstrap_invite,
+    create_data_backup,
     delete_chat_admin,
     delete_event_admin,
     delete_media_admin,
     delete_user_completely,
     delete_user_media_all,
     get_server_stats,
+    kick_user,
+    list_backups,
     list_chats_admin,
     list_events_admin,
     list_media_admin,
     list_users_admin,
+    purge_orphan_media,
+    scan_orphan_media,
+    toggle_maintenance,
 )
+from app.invite_codes import get_permanent_invite, set_permanent_invite
+from app.maintenance_mode import get_maintenance_state
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -37,6 +46,22 @@ class AdminLoginRequest(BaseModel):
 
 class MediaPathRequest(BaseModel):
     path: str = Field(..., min_length=10)
+
+
+class MaintenanceRequest(BaseModel):
+    enabled: bool
+    message: str | None = Field(None, max_length=500)
+
+
+class BroadcastRequest(BaseModel):
+    text: str = Field(..., min_length=1, max_length=2000)
+
+
+class PermanentInviteRequest(BaseModel):
+    code: str | None = Field(
+        None,
+        description="4-digit code, or empty/null to disable permanent invite",
+    )
 
 
 @router.post("/login")
@@ -57,12 +82,23 @@ async def admin_logout(response: Response, admin: dict = CurrentAdmin):
 
 @router.get("/me")
 async def admin_me(admin: dict = CurrentAdmin):
-    return {"ok": True, "authenticated": True}
+    maintenance = await get_maintenance_state()
+    return {"ok": True, "authenticated": True, "maintenance": maintenance}
 
 
 @router.get("/stats")
 async def admin_stats(admin: dict = CurrentAdmin):
     return await get_server_stats()
+
+
+@router.get("/maintenance")
+async def admin_get_maintenance(admin: dict = CurrentAdmin):
+    return await get_maintenance_state()
+
+
+@router.post("/maintenance")
+async def admin_set_maintenance(body: MaintenanceRequest, admin: dict = CurrentAdmin):
+    return await toggle_maintenance(body.enabled, body.message)
 
 
 @router.get("/users")
@@ -74,6 +110,14 @@ async def admin_users(admin: dict = CurrentAdmin):
 async def admin_delete_user(user_id: str, admin: dict = CurrentAdmin):
     try:
         return await delete_user_completely(user_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+
+
+@router.post("/users/{user_id}/kick")
+async def admin_kick_user(user_id: str, admin: dict = CurrentAdmin):
+    try:
+        return await kick_user(user_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
 
@@ -112,6 +156,16 @@ async def admin_delete_media(body: MediaPathRequest, admin: dict = CurrentAdmin)
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
+@router.get("/media/orphans")
+async def admin_orphan_media(admin: dict = CurrentAdmin):
+    return await scan_orphan_media()
+
+
+@router.post("/media/orphans/purge")
+async def admin_purge_orphans(admin: dict = CurrentAdmin):
+    return await purge_orphan_media()
+
+
 @router.get("/events")
 async def admin_events(admin: dict = CurrentAdmin):
     return {"events": await list_events_admin()}
@@ -142,5 +196,35 @@ async def admin_clear_sessions(admin: dict = CurrentAdmin):
 
 @router.post("/maintenance/create-invite")
 async def admin_create_invite(admin: dict = CurrentAdmin):
-    inv = await create_bootstrap_invite()
-    return inv
+    return await create_bootstrap_invite()
+
+
+@router.get("/permanent-invite")
+async def admin_get_permanent_invite(admin: dict = CurrentAdmin):
+    return await get_permanent_invite()
+
+
+@router.put("/permanent-invite")
+async def admin_set_permanent_invite(body: PermanentInviteRequest, admin: dict = CurrentAdmin):
+    try:
+        return await set_permanent_invite(body.code)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.post("/maintenance/backup")
+async def admin_backup(admin: dict = CurrentAdmin):
+    try:
+        return await create_data_backup()
+    except OSError as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get("/maintenance/backups")
+async def admin_list_backups(admin: dict = CurrentAdmin):
+    return {"backups": await list_backups()}
+
+
+@router.post("/broadcast")
+async def admin_broadcast(body: BroadcastRequest, admin: dict = CurrentAdmin):
+    return await broadcast_message(body.text)

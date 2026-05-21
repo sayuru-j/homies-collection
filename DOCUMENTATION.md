@@ -151,8 +151,10 @@ See `requirements.txt`: FastAPI, Uvicorn, Pillow (image compression on server), 
 |--------|------|
 | **Startup code** | Printed when the server starts (dev terminal or `docker compose logs homielog`) — see [DEPLOY.md § Registration invite codes](./DEPLOY.md#registration-invite-codes-docker-logs) |
 | **Friend-generated** | Logged-in user: Settings → **Generate invite code** → `POST /api/users/invite-code` |
+| **Permanent (admin)** | Control Panel → Server → **Permanent registration code** — reusable 4-digit code in `data/auth/permanent_invite.json` |
 
-- Valid for **10 minutes**, single use, stored in `data/auth/invite_codes.json`.
+- Temporary codes: **10 minutes**, single use, `data/auth/invite_codes.json`.
+- Permanent code: optional, set by admin, **does not expire** and **can be reused** for many registrations.
 - Implementation: `app/invite_codes.py`, triggered from `app/main.py` startup.
 
 Auth data: `data/auth/users.json`, `data/auth/sessions.json`, `data/auth/invite_codes.json`  

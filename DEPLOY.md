@@ -558,12 +558,16 @@ Add to `docker-compose.yml` under `homielog`:
 
 | Tab | Actions |
 |-----|---------|
-| **Overview** | User/chat/media counts, disk usage, online users |
-| **Users** | Delete account (DMs, groups, profile, media, sessions); clear user media only |
-| **Chats** | Permanently purge a conversation + message media |
-| **Media** | List/delete files under `data/media/` |
+| **Overview** | **VM disk** (`/` — shows ~30 GB total), app data mount, storage breakdown, uptime |
+| **Server** | **Maintenance mode** (503 public app), broadcast, **data backups** |
+| **Users** | Kick (disconnect WS + sessions), delete account, clear media |
+| **Chats** | Permanently purge conversation + media |
+| **Media** | List/delete files; scan & purge orphan media |
 | **Events** | Delete group events + post media |
-| **Maintenance** | Clear invites, upload chunks, all user sessions; create new invite code |
+| **Tools** | Clear invites/chunks/sessions; generate temporary invite code |
+| **Server → Permanent registration code** | Optional reusable 4-digit code for new signups (`data/auth/permanent_invite.json`) |
+
+**Maintenance mode** takes HomieLog offline for users while `/admin` keeps working. Re-enable with **Bring server online**.
 
 ### API (for scripts)
 

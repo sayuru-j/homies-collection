@@ -1,6 +1,9 @@
 """Server administration: users, chats, media, maintenance."""
 
+import asyncio
+import json
 import shutil
+import tarfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -18,8 +21,10 @@ from app.config import (
     PROFILES_DIR,
     SESSIONS_FILE,
 )
-from app.invite_codes import create_invite
+from app.invite_codes import create_invite, get_permanent_invite, set_permanent_invite
+from app.maintenance_mode import get_maintenance_state, set_maintenance
 from app.presence import manager
+from app.server_meta import get_system_info
 from app.storage import (
     chat_path,
     get_chat,
@@ -58,6 +63,56 @@ def _format_bytes(n: int) -> str:
     return f"{n:.1f} TB"
 
 
+def _disk_usage(path: Path) -> dict:
+    """Filesystem stats for a mount point (VM root = total disk)."""
+    try:
+        usage = shutil.disk_usage(path)
+    except OSError:
+        return {
+            "path": str(path),
+            "available": False,
+            "total": 0,
+            "used": 0,
+            "free": 0,
+            "percent": 0,
+            "total_human": "—",
+            "used_human": "—",
+            "free_human": "—",
+        }
+    total = usage.total
+    used = usage.used
+    free = usage.free
+    pct = round(used / total * 100, 1) if total else 0
+    return {
+        "path": str(path),
+        "available": True,
+        "total": total,
+        "used": used,
+        "free": free,
+        "percent": pct,
+        "total_human": _format_bytes(total),
+        "used_human": _format_bytes(used),
+        "free_human": _format_bytes(free),
+    }
+
+
+def _storage_breakdown() -> dict:
+    dirs = {
+        "auth": AUTH_DIR,
+        "profiles": PROFILES_DIR,
+        "chats": CHATS_DIR,
+        "groups": GROUPS_DIR,
+        "events": EVENTS_DIR,
+        "media": MEDIA_DIR,
+        "chunks": CHUNKS_DIR,
+    }
+    out = {}
+    for key, path in dirs.items():
+        nbytes = _dir_size(path)
+        out[key] = {"bytes": nbytes, "human": _format_bytes(nbytes)}
+    return out
+
+
 async def get_server_stats() -> dict:
     users = await get_users()
     sessions = await get_sessions()
@@ -78,21 +133,35 @@ async def get_server_stats() -> dict:
 
     data_bytes = _dir_size(DATA_DIR)
     media_bytes = _dir_size(MEDIA_DIR)
+    maintenance = await get_maintenance_state()
+    backups_dir = DATA_DIR / "backups"
+    permanent_invite = await get_permanent_invite()
 
     return {
         "users": len(users.get("users", [])),
         "sessions": len(sessions.get("sessions", {})),
         "online": len(manager.online_user_ids()),
+        "websocket_connections": sum(len(v) for v in manager.active.values()),
         "chats": chat_count,
         "groups": group_count,
         "events": event_count,
         "profiles": profile_count,
         "active_invites": active_invites,
+        "permanent_invite_enabled": permanent_invite["enabled"],
+        "permanent_invite_code": permanent_invite.get("code") if permanent_invite["enabled"] else None,
         "chunk_files": chunk_count,
         "data_size": data_bytes,
         "data_size_human": _format_bytes(data_bytes),
         "media_size": media_bytes,
         "media_size_human": _format_bytes(media_bytes),
+        "disk_root": _disk_usage(Path("/")),
+        "disk_data": _disk_usage(DATA_DIR),
+        "storage_breakdown": _storage_breakdown(),
+        "backup_count": len(list(backups_dir.glob("*.tar.gz"))) if backups_dir.exists() else 0,
+        "maintenance": maintenance,
+        "system": get_system_info(),
+        "app_version": "1.0.0",
+        "healthy": not maintenance["enabled"],
     }
 
 
@@ -388,3 +457,176 @@ async def delete_event_admin(event_id: str) -> dict:
 
 async def create_bootstrap_invite() -> dict:
     return await create_invite(created_by=None)
+
+
+async def kick_user(user_id: str) -> dict:
+    users_data = await get_users()
+    user = next((u for u in users_data.get("users", []) if u["id"] == user_id), None)
+    if not user:
+        raise ValueError("User not found")
+    closed = await manager.disconnect_user(user_id)
+    sessions_removed = await _remove_user_from_sessions(user_id)
+    return {
+        "ok": True,
+        "user_id": user_id,
+        "name": user.get("name"),
+        "websockets_closed": closed,
+        "sessions_removed": sessions_removed,
+    }
+
+
+async def broadcast_message(text: str) -> dict:
+    msg = {
+        "type": "admin_broadcast",
+        "text": text[:2000],
+        "at": datetime.now(timezone.utc).isoformat(),
+    }
+    await manager.broadcast_all(msg)
+    return {"ok": True, "recipients": len(manager.online_user_ids())}
+
+
+def _collect_referenced_media_paths() -> set[str]:
+    refs: set[str] = set()
+
+    def add(p: str | None) -> None:
+        if p and p.startswith("data/media/"):
+            refs.add(p.replace("\\", "/"))
+
+    if PROFILES_DIR.exists():
+        for path in PROFILES_DIR.glob("*.json"):
+            try:
+                prof = json.loads(path.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                continue
+            add(prof.get("avatar"))
+
+    if GROUPS_DIR.exists():
+        for path in GROUPS_DIR.glob("*.json"):
+            try:
+                g = json.loads(path.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                continue
+            add(g.get("avatar"))
+
+    if CHATS_DIR.exists():
+        for path in CHATS_DIR.glob("*.json"):
+            try:
+                chat = json.loads(path.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                continue
+            for msg in chat.get("messages", []):
+                add(msg.get("media_path"))
+                add(msg.get("thumb_path"))
+
+    if EVENTS_DIR.exists():
+        for path in EVENTS_DIR.glob("*.json"):
+            try:
+                ev = json.loads(path.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                continue
+            for post in ev.get("posts") or []:
+                add(post.get("media_path"))
+                add(post.get("thumb_path"))
+
+    return refs
+
+
+async def scan_orphan_media() -> dict:
+    refs = _collect_referenced_media_paths()
+    orphans = []
+    if MEDIA_DIR.exists():
+        for path in MEDIA_DIR.rglob("*"):
+            if not path.is_file():
+                continue
+            rel = path.relative_to(BASE_DIR).as_posix()
+            if rel not in refs:
+                orphans.append(
+                    {
+                        "path": rel,
+                        "size": path.stat().st_size,
+                        "size_human": _format_bytes(path.stat().st_size),
+                    }
+                )
+    orphans.sort(key=lambda x: x["size"], reverse=True)
+    total = sum(o["size"] for o in orphans)
+    return {
+        "orphan_count": len(orphans),
+        "orphan_bytes": total,
+        "orphan_size_human": _format_bytes(total),
+        "orphans": orphans[:500],
+    }
+
+
+async def purge_orphan_media() -> dict:
+    scan = await scan_orphan_media()
+    removed = 0
+    for item in scan["orphans"]:
+        try:
+            (BASE_DIR / item["path"]).unlink()
+            removed += 1
+        except OSError:
+            pass
+    return {"ok": True, "files_removed": removed, "freed_human": scan["orphan_size_human"]}
+
+
+def _create_backup_sync() -> dict:
+    backups_dir = DATA_DIR / "backups"
+    backups_dir.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H%M%S")
+    archive = backups_dir / f"homies-data_{stamp}.tar.gz"
+
+    def _filter(ti: tarfile.TarInfo) -> tarfile.TarInfo | None:
+        # Skip nested backup archives to avoid ballooning
+        if "backups/" in ti.name and ti.name != "data/backups/":
+            return None
+        return ti
+
+    with tarfile.open(archive, "w:gz") as tar:
+        tar.add(DATA_DIR, arcname="data", filter=_filter)
+
+    size = archive.stat().st_size
+    return {
+        "ok": True,
+        "path": str(archive.relative_to(BASE_DIR)),
+        "filename": archive.name,
+        "size": size,
+        "size_human": _format_bytes(size),
+    }
+
+
+async def create_data_backup() -> dict:
+    return await asyncio.to_thread(_create_backup_sync)
+
+
+async def list_backups() -> list[dict]:
+    backups_dir = DATA_DIR / "backups"
+    if not backups_dir.exists():
+        return []
+    items = []
+    for path in sorted(backups_dir.glob("*.tar.gz"), reverse=True):
+        items.append(
+            {
+                "filename": path.name,
+                "path": path.relative_to(BASE_DIR).as_posix(),
+                "size": path.stat().st_size,
+                "size_human": _format_bytes(path.stat().st_size),
+                "modified_at": datetime.fromtimestamp(
+                    path.stat().st_mtime, tz=timezone.utc
+                ).isoformat(),
+            }
+        )
+    return items
+
+
+async def toggle_maintenance(enabled: bool, message: str | None = None) -> dict:
+    state = await set_maintenance(enabled, message)
+    if enabled:
+        await manager.broadcast_all(
+            {
+                "type": "server_maintenance",
+                "message": state["message"],
+            }
+        )
+        for uid in list(manager.online_user_ids()):
+            await manager.disconnect_user(uid, reason="maintenance")
+    return state
