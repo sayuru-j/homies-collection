@@ -1042,12 +1042,27 @@ ul {
   width: 32px;
   height: 32px;
   min-width: 32px;
+  max-width: 32px;
+  max-height: 32px;
   border-radius: 50%;
   border: none;
   padding: 0;
   cursor: pointer;
   flex-shrink: 0;
   font: inherit;
+  box-sizing: border-box;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+}
+
+.chat-header-avatar.avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
 }
 
 .chat-header-avatar:hover {
