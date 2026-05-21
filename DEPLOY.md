@@ -26,8 +26,9 @@ This document is the **full replication runbook** for running HomieLog on a sing
 14. [Smoke test checklist](#smoke-test-checklist)
 15. [Troubleshooting](#troubleshooting)
 16. [Replicating on a new VM or domain](#replicating-on-a-new-vm-or-domain)
-17. [Optional: container registry CI](#optional-container-registry-ci)
-18. [Files reference](#files-reference)
+17. [Admin dashboard](#admin-dashboard)
+18. [Optional: container registry CI](#optional-container-registry-ci)
+19. [Files reference](#files-reference)
 
 ---
 
@@ -528,6 +529,54 @@ sudo crontab -e
 
 ---
 
+## Admin dashboard
+
+Web UI for full server control (users, chats, media, events, maintenance). **Not linked** from the public HomieLog app — open directly:
+
+**https://app.green-valley.homes/admin** (or your domain + `/admin`)
+
+### Authentication
+
+- Password is checked **only on the server** (`app/config.py` / environment).
+- Default: set in code; override on the VM:
+
+```bash
+# /opt/appsvc/.env (docker compose env_file) or export before compose up
+ADMIN_PASSWORD=your-strong-password
+```
+
+Add to `docker-compose.yml` under `homielog`:
+
+```yaml
+    env_file: .env
+```
+
+- Admin session cookie: `admin_session` (8 hours, HttpOnly).
+- Stored in `data/auth/admin_sessions.json` on the persistent volume.
+
+### Capabilities
+
+| Tab | Actions |
+|-----|---------|
+| **Overview** | User/chat/media counts, disk usage, online users |
+| **Users** | Delete account (DMs, groups, profile, media, sessions); clear user media only |
+| **Chats** | Permanently purge a conversation + message media |
+| **Media** | List/delete files under `data/media/` |
+| **Events** | Delete group events + post media |
+| **Maintenance** | Clear invites, upload chunks, all user sessions; create new invite code |
+
+### API (for scripts)
+
+Prefix: `/api/admin` — requires admin cookie or header `X-Admin-Token` after `POST /api/admin/login`.
+
+### Redeploy after update
+
+```bash
+cd /opt/appsvc && sudo git pull && sudo docker compose up -d --build
+```
+
+---
+
 ## Optional: container registry CI
 
 Manual pipeline (no Azure DevOps required):
@@ -552,6 +601,9 @@ Optional GitHub Action with `workflow_dispatch` and secrets: `GHCR_TOKEN`, `SSH_
 | `deploy/turnserver.conf.example` | coturn template for host |
 | `static/shared/js/ice-servers.js` | STUN/TURN URLs + credentials |
 | `docker-compose.livekit.yml` | Optional LiveKit (group SFU); not used when `GROUP_CALLS_ENABLED = False` |
+| `static/admin/` | Admin dashboard UI |
+| `app/routers/admin.py` | Admin API |
+| `app/admin_service.py` | Delete users, purge chats, media, maintenance |
 
 ---
 

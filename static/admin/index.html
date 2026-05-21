@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#1a1b1e">
+  <title>Server Admin</title>
+  <link rel="stylesheet" href="/static/admin/css/admin.css">
+</head>
+<body>
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <h1>Server Admin</h1>
+      <p class="login-hint">HomieLog control panel</p>
+      <form id="admin-login-form">
+        <label>Admin password
+          <input type="password" id="admin-password" autocomplete="current-password" required>
+        </label>
+        <p id="login-error" class="error hidden"></p>
+        <button type="submit" class="btn-primary">Sign in</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="dashboard" class="dashboard hidden">
+    <header class="topbar">
+      <div class="topbar-title">
+        <span class="logo">ADM</span>
+        <h1>Server control</h1>
+      </div>
+      <div class="topbar-actions">
+        <button type="button" class="btn-ghost" id="btn-refresh">Refresh</button>
+        <button type="button" class="btn-ghost" id="btn-logout">Log out</button>
+      </div>
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button type="button" class="tab active" data-tab="overview">Overview</button>
+      <button type="button" class="tab" data-tab="users">Users</button>
+      <button type="button" class="tab" data-tab="chats">Chats</button>
+      <button type="button" class="tab" data-tab="media">Media</button>
+      <button type="button" class="tab" data-tab="events">Events</button>
+      <button type="button" class="tab" data-tab="maintenance">Maintenance</button>
+    </nav>
+
+    <main class="content">
+      <section id="panel-overview" class="panel active">
+        <div id="stats-grid" class="stats-grid"></div>
+      </section>
+
+      <section id="panel-users" class="panel">
+        <div class="panel-toolbar">
+          <h2>User accounts</h2>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="users-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>ID</th>
+                <th>Online</th>
+                <th>Sessions</th>
+                <th>Media</th>
+                <th>Created</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="panel-chats" class="panel">
+        <div class="panel-toolbar"><h2>Conversations</h2></div>
+        <div class="table-wrap">
+          <table class="data-table" id="chats-table">
+            <thead>
+              <tr>
+                <th>Chat ID</th>
+                <th>Type</th>
+                <th>Name</th>
+                <th>Messages</th>
+                <th>Members</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="panel-media" class="panel">
+        <div class="panel-toolbar">
+          <h2>Media files</h2>
+          <label class="filter-label">User ID filter
+            <input type="text" id="media-user-filter" placeholder="optional user uuid">
+          </label>
+          <button type="button" class="btn-secondary" id="btn-media-load">Load</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="media-table">
+            <thead>
+              <tr>
+                <th>Path</th>
+                <th>Size</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="panel-events" class="panel">
+        <div class="panel-toolbar"><h2>Group events</h2></div>
+        <div class="table-wrap">
+          <table class="data-table" id="events-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Event ID</th>
+                <th>Group</th>
+                <th>Posts</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="panel-maintenance" class="panel">
+        <h2>Maintenance</h2>
+        <div class="maint-grid">
+          <div class="maint-card">
+            <h3>Invite codes</h3>
+            <p>Clear all codes in <code>invite_codes.json</code>.</p>
+            <button type="button" class="btn-secondary" data-action="clear-invites">Clear invites</button>
+            <button type="button" class="btn-primary" data-action="create-invite">Create new invite</button>
+            <pre id="invite-result" class="result-box hidden"></pre>
+          </div>
+          <div class="maint-card">
+            <h3>Upload chunks</h3>
+            <p>Remove temporary files in <code>data/uploads/chunks</code>.</p>
+            <button type="button" class="btn-secondary" data-action="clear-chunks">Clear chunks</button>
+          </div>
+          <div class="maint-card">
+            <h3>User sessions</h3>
+            <p>Force logout everyone (clears <code>sessions.json</code>).</p>
+            <button type="button" class="btn-warn" data-action="clear-sessions">Clear all sessions</button>
+          </div>
+        </div>
+        <p id="maint-status" class="status-msg"></p>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast hidden" role="status"></div>
+
+  <script src="/static/admin/js/admin.js"></script>
+</body>
+</html>

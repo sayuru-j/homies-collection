@@ -6,6 +6,8 @@ FastAPI chat app with local JSON/file storage in `data/`.
 
 **Production deploy (Azure VM, Docker, Caddy, coturn):** see [DEPLOY.md](./DEPLOY.md).
 
+**Server admin UI:** `/admin` on your deployed host (password in `ADMIN_PASSWORD` env; see DEPLOY.md).
+
 ## Setup
 
 ```bash

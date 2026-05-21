@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -13,6 +14,11 @@ CHUNKS_DIR = DATA_DIR / "uploads" / "chunks"
 USERS_FILE = AUTH_DIR / "users.json"
 SESSIONS_FILE = AUTH_DIR / "sessions.json"
 INVITES_FILE = AUTH_DIR / "invite_codes.json"
+ADMIN_SESSIONS_FILE = AUTH_DIR / "admin_sessions.json"
+
+# Override on the VM: ADMIN_PASSWORD in .env or environment
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "@dminThamaiJuto")
+ADMIN_SESSION_MAX_AGE = 60 * 60 * 8  # 8 hours
 
 INVITE_TTL_SECONDS = 600  # 10 minutes
 

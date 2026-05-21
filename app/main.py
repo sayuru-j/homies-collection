@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import DATA_DIR, MEDIA_DIR
 from app.invite_codes import issue_startup_invite
-from app.routers import auth_routes, calls, chats, events, groups, locations, media, users, ws
+from app.routers import admin, auth_routes, calls, chats, events, groups, locations, media, users, ws
 from app.storage import _ensure_dirs
 
 app = FastAPI(title="HomieLog", version="1.0.0")
@@ -25,6 +25,7 @@ async def startup():
     await issue_startup_invite()
 
 
+app.include_router(admin.router)
 app.include_router(auth_routes.router)
 app.include_router(users.router)
 app.include_router(locations.router)
@@ -89,6 +90,14 @@ async def chat_page():
 @app.get("/stranger-danger")
 async def stranger_danger_page():
     return FileResponse(STRANGER_DANGER_STATIC / "index.html")
+
+
+ADMIN_STATIC = STATIC_DIR / "admin"
+
+
+@app.get("/admin")
+async def admin_page():
+    return FileResponse(ADMIN_STATIC / "index.html")
 
 
 @app.get("/random-chitchat")

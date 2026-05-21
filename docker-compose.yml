@@ -7,6 +7,7 @@ services:
   homielog:
     build: .
     restart: unless-stopped
+    # Optional: env_file: [.env] with ADMIN_PASSWORD=... (see DEPLOY.md)
     volumes:
       - /opt/appsvc/data:/app/data
     expose:

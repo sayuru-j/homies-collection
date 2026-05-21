@@ -10,7 +10,7 @@ This document describes the full system as built end-to-end, including setup, ar
 
 ## Table of contents
 
-0. [Production deployment](./DEPLOY.md) (separate runbook)
+0. [Production deployment](./DEPLOY.md) (separate runbook) · [Admin dashboard](./DEPLOY.md#admin-dashboard)
 1. [Quick start](#quick-start)
 2. [Architecture](#architecture)
 3. [Running HomieLog](#running-homielog)
