@@ -141,11 +141,21 @@ See `requirements.txt`: FastAPI, Uvicorn, Pillow (image compression on server), 
 
 ## Authentication and sessions
 
-- Users register/login with **display name** (or username) + **6-digit PIN**.
+- Users register/login with **display name** (or username) + **6-digit PIN** + **4-digit invite code**.
 - Session token stored in an **HttpOnly** cookie (`session`).
 - WebSocket accepts the same cookie (or `?token=` query param).
 
-Auth data: `data/auth/users.json`, `data/auth/sessions.json`  
+### Invite codes
+
+| Source | When |
+|--------|------|
+| **Startup code** | Printed when the server starts (dev terminal or `docker compose logs homielog`) — see [DEPLOY.md § Registration invite codes](./DEPLOY.md#registration-invite-codes-docker-logs) |
+| **Friend-generated** | Logged-in user: Settings → **Generate invite code** → `POST /api/users/invite-code` |
+
+- Valid for **10 minutes**, single use, stored in `data/auth/invite_codes.json`.
+- Implementation: `app/invite_codes.py`, triggered from `app/main.py` startup.
+
+Auth data: `data/auth/users.json`, `data/auth/sessions.json`, `data/auth/invite_codes.json`  
 Profiles: `data/profiles/{user_id}.json`
 
 ---

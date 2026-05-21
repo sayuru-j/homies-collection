@@ -18,15 +18,16 @@ This document is the **full replication runbook** for running HomieLog on a sing
 6. [DNS](#dns)
 7. [VM preparation](#vm-preparation)
 8. [Deploy application (Docker + Caddy)](#deploy-application-docker--caddy)
-9. [Deploy TURN (coturn on host)](#deploy-turn-coturn-on-host)
-10. [WebRTC / ICE configuration](#webrtc--ice-configuration)
-11. [Updates and redeploy](#updates-and-redeploy)
-12. [Backups](#backups)
-13. [Smoke test checklist](#smoke-test-checklist)
-14. [Troubleshooting](#troubleshooting)
-15. [Replicating on a new VM or domain](#replicating-on-a-new-vm-or-domain)
-16. [Optional: container registry CI](#optional-container-registry-ci)
-17. [Files reference](#files-reference)
+9. [Registration invite codes (Docker logs)](#registration-invite-codes-docker-logs)
+10. [Deploy TURN (coturn on host)](#deploy-turn-coturn-on-host)
+11. [WebRTC / ICE configuration](#webrtc--ice-configuration)
+12. [Updates and redeploy](#updates-and-redeploy)
+13. [Backups](#backups)
+14. [Smoke test checklist](#smoke-test-checklist)
+15. [Troubleshooting](#troubleshooting)
+16. [Replicating on a new VM or domain](#replicating-on-a-new-vm-or-domain)
+17. [Optional: container registry CI](#optional-container-registry-ci)
+18. [Files reference](#files-reference)
 
 ---
 
@@ -265,6 +266,93 @@ curl -sI https://app.green-valley.homes | head -5
 
 ---
 
+## Registration invite codes (Docker logs)
+
+New users need a **4-digit invite code** to register. On every app start, HomieLog creates one bootstrap code and prints it to **stdout** (Uvicorn’s terminal inside the `homielog` container).
+
+### Where it comes from
+
+| Piece | Location |
+|-------|----------|
+| Startup hook | `app/main.py` → `issue_startup_invite()` on FastAPI startup |
+| Logic | `app/invite_codes.py` |
+| Storage | `/opt/appsvc/data/auth/invite_codes.json` (bind mount) |
+| TTL | **10 minutes** (`INVITE_TTL_SECONDS = 600` in `app/config.py`) |
+
+On startup you should see a banner like:
+
+```text
+====================================================
+  HOMIES INVITE CODE (valid 10 min): 1234
+====================================================
+```
+
+And a log line:
+
+```text
+HomieLog startup invite code: 1234 (valid 10 minutes)
+```
+
+### View logs on the VM (production)
+
+**Follow live logs (best when restarting):**
+
+```bash
+cd /opt/appsvc
+sudo docker compose logs -f homielog
+```
+
+**Last 100 lines (find a recent startup banner):**
+
+```bash
+sudo docker compose logs homielog --tail 100
+```
+
+**Filter for invite lines only:**
+
+```bash
+sudo docker compose logs homielog 2>&1 | grep -i invite
+```
+
+**Generate a fresh startup code** (restart container — creates a **new** code, old unused startup codes may still exist in JSON until they expire):
+
+```bash
+cd /opt/appsvc
+sudo docker compose restart homielog
+sudo docker compose logs homielog --tail 30
+```
+
+There is **no interactive TTY** attached in production; you always use `docker compose logs`, not `docker attach`.
+
+### After the first user exists
+
+Logged-in friends do **not** need Docker logs. In the app:
+
+**Settings → Generate invite code** (calls `POST /api/users/invite-code`, returns a new 4-digit code for 10 minutes).
+
+### Read codes from disk (optional)
+
+Unused, non-expired codes are in `invite_codes.json`:
+
+```bash
+sudo cat /opt/appsvc/data/auth/invite_codes.json
+```
+
+Look for entries with `"used_at": null` and `"expires_at"` still in the future. Install `jq` for easier parsing:
+
+```bash
+sudo apt-get install -y jq
+sudo jq '.invites[] | select(.used_at == null)' /opt/appsvc/data/auth/invite_codes.json
+```
+
+### Security notes
+
+- Anyone with **SSH + Docker access** on the VM can read invite codes from logs or `data/auth/`.
+- Codes in logs rotate on restart; treat VM access like admin access.
+- Do not share `docker compose logs` output publicly if it contains a fresh code.
+
+---
+
 ## Deploy TURN (coturn on host)
 
 Run coturn on the **host**, not inside Docker (simpler UDP relay port range).
@@ -422,6 +510,8 @@ sudo crontab -e
 | `turnutils_uclient` fails | coturn not enabled; firewall; wrong `relay-ip` (must be Azure **private** IP) |
 | Old TURN IP after migration | Update `ice-servers.js`, rebuild, hard-refresh |
 | Empty app after deploy | Restored empty `data/` over production — restore from `backups/` |
+| Need register code | `docker compose logs homielog \| grep -i invite` or restart `homielog` and read last 30 lines |
+| Invite expired | Restart app for new startup code, or use logged-in **Generate invite code** |
 
 ---
 
