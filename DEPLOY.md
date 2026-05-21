@@ -436,18 +436,75 @@ To change TURN host or password, edit **only** `ice-servers.js`, redeploy Docker
 
 ---
 
+## Git on `/opt/appsvc` (one-time fix)
+
+If you first deployed by **copying files** (no `.git`), `git pull` will fail. Use this once to attach the repo **without losing production `data/`**:
+
+```bash
+# 1) Backup live data
+sudo tar czf /opt/appsvc/backups/data-pre-git-$(date +%F).tar.gz -C /opt/appsvc data
+
+# 2) Move data out of the way (repo may contain a sample data/ folder)
+sudo mv /opt/appsvc/data /tmp/appsvc-data-save
+
+# 3) Clone fresh into a temp dir, then move .git + sync tree
+cd /tmp
+rm -rf homies-collection
+git clone https://github.com/sayuru-j/homies-collection.git
+sudo cp -a /tmp/homies-collection/.git /opt/appsvc/
+cd /opt/appsvc
+sudo git checkout -f main
+# If checkout fails, try: sudo git branch -M main && sudo git reset --hard origin/main
+
+# 4) Restore production data (never use repo sample data on the VM)
+sudo rm -rf /opt/appsvc/data
+sudo mv /tmp/appsvc-data-save /opt/appsvc/data
+sudo chown -R 1000:1000 /opt/appsvc/data
+
+# 5) Tell git to ignore local data forever
+echo 'data/' | sudo tee -a .git/info/exclude
+
+# 6) Deploy
+sudo chmod +x deploy.sh
+sudo ./deploy.sh
+```
+
+Verify:
+
+```bash
+cd /opt/appsvc && sudo git status && sudo git remote -v
+```
+
+**Alternative (cleanest):** rename old dir, clone anew, copy `data/` back:
+
+```bash
+sudo mv /opt/appsvc /opt/appsvc.old
+sudo git clone https://github.com/sayuru-j/homies-collection.git /opt/appsvc
+sudo cp -a /opt/appsvc.old/data /opt/appsvc/
+sudo chown -R 1000:1000 /opt/appsvc/data
+cd /opt/appsvc && sudo chmod +x deploy.sh && sudo ./deploy.sh
+```
+
+---
+
 ## Updates and redeploy
 
 After pushing changes to GitHub:
 
 ```bash
 cd /opt/appsvc
-sudo git pull
+sudo git pull origin main
 sudo ./deploy.sh
-# or: sudo docker compose up -d --build
 ```
 
-`deploy.sh` rebuilds `homielog`, restarts compose, prunes old images.
+`deploy.sh` runs `git pull` (if `.git` exists), rebuilds `homielog`, restarts compose, prunes old images.
+
+If Docker shows **CACHED** for `COPY app` / `COPY static` after a pull, force a rebuild:
+
+```bash
+sudo docker compose build --no-cache homielog
+sudo docker compose up -d
+```
 
 **Hard-refresh** clients (Ctrl+Shift+R) after frontend/ICE changes.
 
@@ -623,10 +680,10 @@ cd /opt/appsvc && sudo chmod +x deploy.sh && sudo docker compose up -d --build
 # coturn: see "Deploy TURN" section above
 ```
 
-**Routine update:**
+**Routine update (after `.git` is set up):**
 
 ```bash
-cd /opt/appsvc && sudo git pull && sudo ./deploy.sh
+cd /opt/appsvc && sudo git pull origin main && sudo ./deploy.sh
 ```
 
 ---
