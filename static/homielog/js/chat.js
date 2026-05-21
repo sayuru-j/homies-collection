@@ -121,6 +121,39 @@ function anyCallIdle() {
   return voiceIdle && groupIdle && meshIdle;
 }
 
+/** User collapsed full-screen call UI; call continues in background. */
+let callUiMinimized = false;
+
+function setCallMinimized(minimized) {
+  callUiMinimized = !!minimized;
+  const overlay = document.getElementById("call-overlay");
+  if (overlay && !overlay.classList.contains("hidden")) {
+    overlay.classList.toggle("call-overlay--minimized", callUiMinimized);
+  }
+}
+
+function syncCallChrome(ui) {
+  const overlay = document.getElementById("call-overlay");
+  const canMinimize = ["active", "connecting", "outgoing"].includes(ui.state);
+  const minimizeBtn = document.getElementById("call-minimize-btn");
+  const expandBtn = document.getElementById("call-expand-btn");
+
+  if (ui.state === "idle" || ui.state === "incoming") {
+    callUiMinimized = false;
+  }
+
+  const showMinimized =
+    callUiMinimized && ui.state !== "idle" && ui.state !== "incoming";
+  overlay?.classList.toggle("call-overlay--minimized", showMinimized);
+
+  minimizeBtn?.classList.toggle("hidden", !canMinimize || showMinimized);
+  expandBtn?.classList.toggle("hidden", !showMinimized);
+
+  if (typeof refreshUiIcons === "function") {
+    refreshUiIcons(minimizeBtn?.parentElement);
+  }
+}
+
 function updateCallButton() {
   const voiceBtn = document.getElementById("call-btn");
   const videoBtn = document.getElementById("video-call-btn");
@@ -192,9 +225,11 @@ function updateGroupCallOverlay(ui) {
 
   if (ui.state === "idle") {
     overlay.classList.add("hidden");
+    overlay.classList.remove("call-overlay--minimized");
     card?.classList.remove("call-card--group", "call-card--video");
     groupStage?.classList.add("hidden");
     updateCallButton();
+    syncCallChrome(ui);
     return;
   }
 
@@ -243,6 +278,7 @@ function updateGroupCallOverlay(ui) {
     muteBtn.querySelector(".call-mute-icon-off")?.classList.toggle("hidden", !ui.muted);
   }
   updateCallButton();
+  syncCallChrome(ui);
 }
 
 function updateCallRecordingNotice(ui) {
@@ -318,6 +354,7 @@ function updateCallOverlay(ui) {
     const notice = callFailureMessage(ui.reason, ui.peerName);
     if (notice) showCallNotice(notice);
     overlay.classList.add("hidden");
+    overlay.classList.remove("call-overlay--minimized");
     card?.classList.remove("call-card--video");
     updateCallRecordButton({
       callMode: "voice",
@@ -327,11 +364,12 @@ function updateCallOverlay(ui) {
     });
     updateCallRecordingNotice({ state: "idle", recording: false, peerRecording: false });
     updateCallButton();
+    syncCallChrome(ui);
     return;
   }
 
   overlay.classList.remove("hidden");
-  card?.classList.toggle("call-card--video", isVideo);
+  card?.classList.toggle("call-card--video", isVideo && !callUiMinimized);
   const name = ui.peerName || currentChatMeta?.title || "Friend";
   if (nameEl) nameEl.textContent = name;
 
@@ -387,6 +425,7 @@ function updateCallOverlay(ui) {
   }
   updateCallRecordButton(ui);
   updateCallButton();
+  syncCallChrome(ui);
 }
 
 async function uploadCallRecording(blob, targetChatId, compressionPercent) {
@@ -511,9 +550,37 @@ function initVoiceCall() {
   document.getElementById("call-mute-btn")?.addEventListener("click", () => {
     if (typeof GroupCall !== "undefined" && GroupCall.isInCall()) {
       GroupCall.toggleMute();
+    } else if (typeof GroupMeshCall !== "undefined" && GroupMeshCall.isInCall()) {
+      GroupMeshCall.toggleMute();
     } else {
       VoiceCall.toggleMute();
     }
+  });
+
+  document.getElementById("call-minimize-btn")?.addEventListener("click", () => {
+    setCallMinimized(true);
+    const overlay = document.getElementById("call-overlay");
+    if (overlay && !overlay.classList.contains("hidden")) {
+      overlay.classList.add("call-overlay--minimized");
+      document.getElementById("call-expand-btn")?.classList.remove("hidden");
+      document.getElementById("call-minimize-btn")?.classList.add("hidden");
+    }
+  });
+
+  document.getElementById("call-expand-btn")?.addEventListener("click", () => {
+    setCallMinimized(false);
+    const overlay = document.getElementById("call-overlay");
+    overlay?.classList.remove("call-overlay--minimized");
+    document.getElementById("call-expand-btn")?.classList.add("hidden");
+    const uiState =
+      typeof VoiceCall !== "undefined" && !VoiceCall.isIdle()
+        ? "active"
+        : typeof GroupMeshCall !== "undefined" && GroupMeshCall.isInCall()
+          ? "active"
+          : typeof GroupCall !== "undefined" && GroupCall.isInCall()
+            ? "active"
+            : "outgoing";
+    syncCallChrome({ state: uiState });
   });
 }
 

@@ -418,6 +418,14 @@
 
   <div id="call-overlay" class="call-overlay hidden" aria-live="polite">
     <div class="call-card" id="call-card">
+      <div class="call-card-chrome">
+        <button type="button" class="call-chrome-btn call-expand-btn hidden" id="call-expand-btn" title="Expand call" aria-label="Expand call">
+          <i data-lucide="maximize-2" class="icon" style="width:20px;height:20px" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="call-chrome-btn call-minimize-btn hidden" id="call-minimize-btn" title="Minimize call" aria-label="Minimize call">
+          <i data-lucide="minus" class="icon" style="width:20px;height:20px" aria-hidden="true"></i>
+        </button>
+      </div>
       <div id="call-group-stage" class="call-group-stage hidden">
         <div id="call-participants-grid" class="call-participants-grid" aria-live="polite"></div>
       </div>

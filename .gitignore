@@ -1,4 +1,6 @@
 certs/
+
+# Local app storage (users, chats, media) — keep on disk only, not in git
 data/
 __pycache__/
 *.py[cod]
